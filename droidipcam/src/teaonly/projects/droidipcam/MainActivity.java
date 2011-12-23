@@ -46,14 +46,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main);
     }
     
-    @Override
-    protected void finalize() throws Throwable
-    {
-        //do finalization here
-        super.finalize();
-        clearResource();
-    } 
-      
 	@Override
 	public boolean onCreateOptionsMenu(Menu m){
     	m.add(0, MENU_EXIT, 0, "Exit");
@@ -128,7 +120,8 @@ public class MainActivity extends Activity {
 
     private void setup() {
         clearResource();
-        
+        buildResource(); 
+
         NativeAgent.LoadLibraries();
         myAgent = new NativeAgent("teaonly.project");
         myAgent.setListener( nativeAgentListener );

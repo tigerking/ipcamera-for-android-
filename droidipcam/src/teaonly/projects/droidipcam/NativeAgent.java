@@ -17,7 +17,7 @@ public class NativeAgent extends GenericTask{
     private LocalSocket dSend, dRecv;
     private LocalServerSocket dlss;
 	
-    private native int checkMedia(String fileName);
+    private native int nativeCheckMedia(String fileName);
     
 	public NativeAgent(String addr) {
         try {
@@ -52,16 +52,8 @@ public class NativeAgent extends GenericTask{
         }
 	}
 	
-	public void NativeBegin(String server, int port, String user, String passwd, String resource) {
-		
-    }
-
-    public void NativeEnd() {
-		
-    }
-
     public boolean NativeCheckMedia(String filename) {
-        if (checkMedia(filename) > 0)
+        if (nativeCheckMedia(filename) > 0)
             return true;
         else
             return false;
@@ -121,7 +113,7 @@ public class NativeAgent extends GenericTask{
 
 	public static void LoadLibraries() {
         //Local library .so files before this activity created.
-		
+        System.loadLibrary("ipcamera");		
     }
 
 }
