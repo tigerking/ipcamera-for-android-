@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">IP Camera</string>
     
+    <string name="action_prepare">Prepare</string>
     <string name="action_start">Start</string>
-    
-    <string name="message_idle">Idle</string> 
-   
+ 
+    <string name="res_low">320x240</string>
+    <string name="res_medium">640x480</string>
+    <string name="res_high">1280x720</string>
+
+    <string name="msg_idle">Before working, you must check your camera by press Prepare</string> 
+    <string name="msg_prepare_waiting">Checking camera, waiting...</string>
+    <string name="msg_prepare_ok">Preparing is OK, press Start.</string>
+    <string name="msg_prepare_error">Prepareing is error, please try again.</string>
 
 </resources>

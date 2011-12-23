@@ -17,10 +17,7 @@ public class NativeAgent extends GenericTask{
     private LocalSocket dSend, dRecv;
     private LocalServerSocket dlss;
 	
-	/*
-	private native int startXmpp(FileDescriptor fd, FileDescriptor fd2, String server, int port, String user, String passwd, String resource);
-    private native int stopXmpp();
-	*/
+    private native int checkMedia(String fileName);
     
 	public NativeAgent(String addr) {
         try {
@@ -62,7 +59,14 @@ public class NativeAgent extends GenericTask{
     public void NativeEnd() {
 		
     }
-    
+
+    public boolean NativeCheckMedia(String filename) {
+        if (checkMedia(filename) > 0)
+            return true;
+        else
+            return false;
+    }
+
     public void ResetDataSocket() throws IOException {
         dSend = new LocalSocket();
         dSend.connect(new LocalSocketAddress(localAddress));

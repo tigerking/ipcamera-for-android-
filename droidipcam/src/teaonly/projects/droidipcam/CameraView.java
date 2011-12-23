@@ -14,6 +14,7 @@ import android.view.View;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileDescriptor;
 import java.lang.System;
 import java.lang.Thread;
 import java.nio.ByteBuffer;
@@ -46,8 +47,8 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
 
         setOnTouchListener(this);
     }
-   
-    public void StartStreaming() {
+    
+    public void PrepareMedia() {
         myMediaRecorder =  new MediaRecorder();
         myCamera.stopPreview();
         myCamera.unlock();
@@ -65,28 +66,56 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
         targetProfile.videoCodec = MediaRecorder.VideoEncoder.H264;
         targetProfile.fileFormat = MediaRecorder.OutputFormat.MPEG_4;
         myMediaRecorder.setProfile(targetProfile);
+    }
+   
+    private boolean realyStart() {
         
-        myMediaRecorder.setOutputFile("/sdcard/myvideo.mp4");
-        myMediaRecorder.setMaxDuration(7200000); 	// Set max duration 2 hours
-        myMediaRecorder.setMaxFileSize(1600000000); // Set max file size 16G
-                
         myMediaRecorder.setPreviewDisplay(myCamSHolder.getSurface());
         try {
         	myMediaRecorder.prepare();
 	    } catch (IllegalStateException e) {
 	        releaseMediaRecorder();	
 	        Log.d("TEAONLY", "JAVA:  camera prepare illegal error");
+            return false;
 	    } catch (IOException e) {
 	        releaseMediaRecorder();	    
 	        Log.d("TEAONLY", "JAVA:  camera prepare io error");
+            return false;
 	    }
 	    
-	    myMediaRecorder.start();
+        try {
+            myMediaRecorder.start();
+        } catch( Exception e) {
+            releaseMediaRecorder();
+	        Log.d("TEAONLY", "JAVA:  camera start error");
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean StartStreaming(FileDescriptor targetFd) {
+        myMediaRecorder.setOutputFile(targetFd);
+        myMediaRecorder.setMaxDuration(7200000); 	// Set max duration 2 hours
+        myMediaRecorder.setMaxFileSize(1600000000); // Set max file size 16G
+                
+        return realyStart();
+    }
+
+    public boolean StartRecording(String targetFile) {
+        
+        myMediaRecorder.setOutputFile(targetFile);
+        myMediaRecorder.setMaxDuration(7200000); 	// Set max duration 2 hours
+        myMediaRecorder.setMaxFileSize(1600000000); // Set max file size 16G
+                
+        return realyStart();
     }
     
-    public void StopStreaming() {
-    	
+    public void StopMedia() {
+        myMediaRecorder.stop();
+        releaseMediaRecorder();        
     }
+
     private void releaseMediaRecorder(){
         if (myMediaRecorder != null) {
         	myMediaRecorder.reset();   // clear recorder configuration
@@ -99,7 +128,7 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
         
     @Override
     public void surfaceChanged(SurfaceHolder sh, int format, int w, int h){
-    	if ( myCamera != null) {
+    	if ( myCamera != null && myMediaRecorder == null) {
             myCamera.stopPreview();
             try {
                 myCamera.setPreviewDisplay(sh);
