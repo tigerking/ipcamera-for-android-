@@ -63,7 +63,15 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
 
         setOnTouchListener(this);
     }
+   
+    public void StartStreaming() {
+        
+    }
     
+    public void StopStreaming() {
+            
+    }
+
     @Override
     public void surfaceChanged(SurfaceHolder sh, int format, int w, int h){
     	if ( myCamera != null) {

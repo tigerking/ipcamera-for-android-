@@ -12,6 +12,7 @@ import android.util.Xml;
 public class NativeAgent extends GenericTask{
     private LocalSocket jSock, nSock; 
     private LocalServerSocket lss;
+    private String localAddress;
 
     private LocalSocket dSend, dRecv;
     private LocalServerSocket dlss;
@@ -21,8 +22,9 @@ public class NativeAgent extends GenericTask{
     private native int stopXmpp();
 	*/
     
-	public NativeAgent(String localAddress) {
+	public NativeAgent(String addr) {
         try {
+            localAddress = addr;
             jSock = new LocalSocket();
             
             lss = new LocalServerSocket(localAddress);
@@ -33,13 +35,6 @@ public class NativeAgent extends GenericTask{
             nSock = lss.accept();
             nSock.setReceiveBufferSize(1000);
             nSock.setSendBufferSize(1000);
-           
-            dSend = new LocalSocket();
-            dSend.connect(new LocalSocketAddress(localAddress));
-            dSend.setSendBufferSize(1024*128);
-
-            dRecv = lss.accept();
-            dRecv.setReceiveBufferSize(1024*128);
         
         } catch ( IOException ex) {
             ex.printStackTrace();
@@ -68,7 +63,16 @@ public class NativeAgent extends GenericTask{
 		
     }
     
-	public OutputStream getDataOutputStream() throws IOException{
+    public void ResetDataSocket() throws IOException {
+        dSend = new LocalSocket();
+        dSend.connect(new LocalSocketAddress(localAddress));
+        dSend.setSendBufferSize(1024*128);
+
+        dRecv = lss.accept();
+        dRecv.setReceiveBufferSize(1024*128);
+    }
+
+	public OutputStream GetDataOutputStream() throws IOException{
         return dSend.getOutputStream();
     }
 
