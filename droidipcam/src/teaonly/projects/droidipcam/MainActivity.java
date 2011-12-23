@@ -1,19 +1,10 @@
 package teaonly.projects.droidipcam;
 
-import teaonly.projects.droidipcam.*;
 import teaonly.projects.task.*;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.hardware.Camera;
-import android.hardware.Camera.PreviewCallback;
-import android.graphics.ImageFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,11 +13,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.*;
-import java.lang.Thread;
-import java.nio.ByteBuffer;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import android.widget.Button;
 
 public class MainActivity extends Activity {
 	private static final int MENU_EXIT = 0xCC882201;
@@ -102,6 +89,9 @@ public class MainActivity extends Activity {
         
         View  v = (View)findViewById(R.id.layout_setup);
         v.setVisibility(View.VISIBLE);
+        
+        Button myButton = (Button)findViewById(R.id.btn_start);
+        myButton.setOnClickListener(startAction);
     }
 
  	private void handleNativeEvent(NativeMessage nativeMsg) {
@@ -127,7 +117,7 @@ public class MainActivity extends Activity {
      private OnClickListener startAction = new OnClickListener() { 
         @Override
         public void onClick(View v) {
-			
+        	myCV.StartStreaming();
 		}
     }; 
 

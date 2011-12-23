@@ -1,27 +1,14 @@
 package teaonly.projects.droidipcam;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.hardware.Camera;
-import android.hardware.Camera.PreviewCallback;
-import android.hardware.Camera.PictureCallback;
-import android.os.Handler;
 import android.media.AudioManager;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
 import java.io.IOException;
@@ -36,16 +23,13 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
 
     private AudioManager mAudioManager = null; 
     private Camera myCamera = null;
+    private MediaRecorder myMediaRecorder = null;
     private SurfaceHolder myCamSHolder;
     private SurfaceView	myCameraSView;
-    private MainActivity myActivity;
-    private Camera.Size preSize;
 
     public CameraView(Context c, AttributeSet attr){
         super(c, attr);
         
-        myActivity = (MainActivity)c;
-
         mAudioManager = (AudioManager)c.getSystemService(Context.AUDIO_SERVICE);
         mAudioManager.setStreamMute(AudioManager.STREAM_SYSTEM, true); 
     }
@@ -59,19 +43,60 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
         myCamera = Camera.open();
         Camera.Parameters p = myCamera.getParameters();
         myCamera.setParameters(p);
-        preSize = myCamera.new Size(0, 0);
 
         setOnTouchListener(this);
     }
    
     public void StartStreaming() {
+        myMediaRecorder =  new MediaRecorder();
+        myCamera.stopPreview();
+        myCamera.unlock();
         
+        myMediaRecorder.setCamera(myCamera);
+        myMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+        myMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+	    
+        CamcorderProfile targetProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
+        targetProfile.quality = 60;
+        targetProfile.videoBitRate = 512000;
+        targetProfile.videoFrameWidth = 640;
+        targetProfile.videoFrameHeight = 480;
+        targetProfile.videoFrameRate = 30;
+        targetProfile.videoCodec = MediaRecorder.VideoEncoder.H264;
+        targetProfile.fileFormat = MediaRecorder.OutputFormat.MPEG_4;
+        myMediaRecorder.setProfile(targetProfile);
+        
+        myMediaRecorder.setOutputFile("/sdcard/myvideo.mp4");
+        myMediaRecorder.setMaxDuration(7200000); 	// Set max duration 2 hours
+        myMediaRecorder.setMaxFileSize(1600000000); // Set max file size 16G
+                
+        myMediaRecorder.setPreviewDisplay(myCamSHolder.getSurface());
+        try {
+        	myMediaRecorder.prepare();
+	    } catch (IllegalStateException e) {
+	        releaseMediaRecorder();	
+	        Log.d("TEAONLY", "JAVA:  camera prepare illegal error");
+	    } catch (IOException e) {
+	        releaseMediaRecorder();	    
+	        Log.d("TEAONLY", "JAVA:  camera prepare io error");
+	    }
+	    
+	    myMediaRecorder.start();
     }
     
     public void StopStreaming() {
-            
+    	
     }
-
+    private void releaseMediaRecorder(){
+        if (myMediaRecorder != null) {
+        	myMediaRecorder.reset();   // clear recorder configuration
+        	myMediaRecorder.release(); // release the recorder object
+        	myMediaRecorder = null;
+            myCamera.lock();           // lock camera for later use
+            myCamera.startPreview();
+        }
+    }
+        
     @Override
     public void surfaceChanged(SurfaceHolder sh, int format, int w, int h){
     	if ( myCamera != null) {
@@ -97,5 +122,4 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
     public boolean onTouch(View v, MotionEvent evt) {
         return true;        
     }
-
 }
