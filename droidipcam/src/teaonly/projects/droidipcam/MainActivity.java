@@ -183,7 +183,7 @@ public class MainActivity extends Activity {
                         }
                         btnPrepare.setEnabled(true);
                     } 
-                }, 3000); // 3 seconds to release 
+                }, 2000); // 2 seconds to release 
             } else {
                 btnPrepare.setEnabled(true);
                 myMessage.setText( getString(R.string.msg_prepare_error));
