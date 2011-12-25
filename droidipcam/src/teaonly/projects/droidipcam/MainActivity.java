@@ -6,10 +6,11 @@ import teaonly.projects.task.*;
 import java.io.IOException;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
@@ -19,15 +20,19 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	private static final int MENU_EXIT = 0xCC882201;
     
     NativeAgent myAgent;
     CameraView myCamView;
+    StreamingServer strServer;
+    
     TextView myMessage;
-    Button btnPrepare;
     Button btnStart;
+    boolean inServer = false;
+    boolean inStreaming = false;
 
     final String checkingFile = "/sdcard/ipcam/myvideo.mp4";
     final String resourceDirectory = "/sdcard/ipcam";
@@ -135,20 +140,88 @@ public class MainActivity extends Activity {
 
         btnStart = (Button)findViewById(R.id.btn_start);
         btnStart.setOnClickListener(startAction);
-        btnStart.setEnabled(false);
-        btnPrepare = (Button)findViewById(R.id.btn_prepare);
-        btnPrepare.setOnClickListener(prepareAction);
-        btnPrepare.setEnabled(true);
+        btnStart.setEnabled(true);
 
         View  v = (View)findViewById(R.id.layout_setup);
         v.setVisibility(View.VISIBLE);
+    }
+    
+    private void startServer() {
+        inServer = true;
+        btnStart.setText( getString(R.string.action_stop) );
+        btnStart.setEnabled(true);    
+        NetInfoAdapter.Update(this);
+        myMessage.setText( getString(R.string.msg_prepare_ok) + "http://" + NetInfoAdapter.getInfo("IP")  + ":8080" );
+
+        try {
+            strServer = new StreamingServer(8080, resourceDirectory); 
+        } catch( IOException e ) {
+            e.printStackTrace();
+            showToast(this, "Can't start http server..");
+        }
+    }
+
+    private void stopServer() {
+       inServer = false;
+       btnStart.setText( getString(R.string.action_start) );
+       btnStart.setEnabled(true);    
+       myMessage.setText( getString(R.string.msg_idle));
+       if ( strServer != null) {
+            strServer.stop();
+            strServer = null;
+       }
     }
 
  	private void handleNativeEvent(NativeMessage nativeMsg) {
 		
 	}
-	
-     private TaskListener nativeAgentListener = new TaskAdapter() { 
+
+    private void doAction() {
+         if ( inServer == false) {
+            myCamView.PrepareMedia();
+            boolean ret = myCamView.StartRecording(checkingFile);
+            btnStart.setEnabled(false);
+
+            if ( ret ) {
+                new Handler().postDelayed(new Runnable() { 
+                    public void run() { 
+                        myCamView.StopMedia();
+                        if ( myAgent.NativeCheckMedia(checkingFile) ) {
+                            startServer();    
+                        } else {
+                            btnStart.setEnabled(true);
+                            showToast(MainActivity.this, getString(R.string.msg_prepare_error));
+                        }
+                    } 
+                }, 2000); // 2 seconds to release 
+            } else {
+                btnStart.setEnabled(true);
+                showToast(this, getString(R.string.msg_prepare_error));
+            }
+        } else {
+            stopServer();
+        }
+    
+    }
+
+    private void showToast(Context context, String message) { 
+        // create the view
+        LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = vi.inflate(R.layout.message_toast, null);
+
+        // set the text in the view
+        TextView tv = (TextView)view.findViewById(R.id.message);
+        tv.setText(message);
+
+        // show the toast
+        Toast toast = new Toast(context);
+        toast.setView(view);
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.show();
+    }   
+
+
+    private TaskListener nativeAgentListener = new TaskAdapter() { 
          @Override
          public String getName() {
              return "NativeAgent";
@@ -164,40 +237,11 @@ public class MainActivity extends Activity {
          }   
      };   
 
-     private OnClickListener prepareAction = new OnClickListener() {
+     private OnClickListener startAction = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            myCamView.PrepareMedia();
-            btnPrepare.setEnabled(false);
-            boolean ret = myCamView.StartRecording(checkingFile);
-            
-            if ( ret ) {
-                new Handler().postDelayed(new Runnable(){ 
-                    public void run() { 
-                        myCamView.StopMedia();
-                        if ( myAgent.NativeCheckMedia(checkingFile) ) {
-                            myMessage.setText( getString(R.string.msg_prepare_ok));
-                            btnStart.setEnabled(true);                            
-                        } else {
-                            myMessage.setText( getString(R.string.msg_prepare_error));
-                        }
-                        btnPrepare.setEnabled(true);
-                    } 
-                }, 2000); // 2 seconds to release 
-            } else {
-                btnPrepare.setEnabled(true);
-                myMessage.setText( getString(R.string.msg_prepare_error));
-            }
-
+            doAction();
         }
      };
-
-     private OnClickListener startAction = new OnClickListener() { 
-        @Override
-        public void onClick(View v) {
-            
-        }
-    }; 
-
 
 }
