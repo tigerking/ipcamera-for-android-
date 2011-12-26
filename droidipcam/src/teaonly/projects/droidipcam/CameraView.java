@@ -98,7 +98,8 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
         myMediaRecorder.setOutputFile(targetFd);
         myMediaRecorder.setMaxDuration(7200000); 	// Set max duration 2 hours
         myMediaRecorder.setMaxFileSize(1600000000); // Set max file size 16G
-                
+        
+        myMediaRecorder.setOnInfoListener(streamingEventHandler);
         return realyStart();
     }
 
@@ -124,8 +125,17 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
             myCamera.lock();           // lock camera for later use
             myCamera.startPreview();
         }
+        myMediaRecorder = null;
     }
-        
+
+     
+    private MediaRecorder.OnInfoListener streamingEventHandler = new MediaRecorder.OnInfoListener() {
+        @Override
+        public void onInfo(MediaRecorder mr, int what, int extra) {
+            Log.d("TEAONLY", "MediaRecorder event = " + what);    
+        }
+    };
+
     @Override
     public void surfaceChanged(SurfaceHolder sh, int format, int w, int h){
     	if ( myCamera != null && myMediaRecorder == null) {
@@ -151,4 +161,5 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
     public boolean onTouch(View v, MotionEvent evt) {
         return true;        
     }
+
 }

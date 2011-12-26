@@ -40,8 +40,8 @@ public class NativeAgent {
             ex.printStackTrace();                
         }
     }
-    public OutputStream GetCameraWriteStream() throws IOException{
-        return cameraFoo.getOutputStream();
+    public FileDescriptor GetCameraWriteFD(){
+        return cameraFoo.getFileDescriptor();
     }
     public InputStream GetCameraReadStream() throws IOException{
         return cameraFoo.getInputStream();
@@ -69,16 +69,18 @@ public class NativeAgent {
             ex.printStackTrace();                
         }
     }
-    public OutputStream GetMuxerWriteStream() throws IOException{
-        return muxerFoo.getOutputStream();
+    public FileDescriptor GetMuxerWriteStream() {
+        return muxerFoo.getFileDescriptor();
     }
-    public InputStream GetMuxerReadStream() throws IOException{
+    public InputStream GetMuxerReadStream() throws IOException {
         return muxerFoo.getInputStream();
     }
     public void ReleaseMuxerSocket() {
-         try {
-            muxerFoo.close();
-            muxerBar.close();
+        try {
+            if ( muxerFoo != null)
+                muxerFoo.close();
+            if ( muxerBar != null)
+                muxerBar.close();
         } catch ( IOException ex) {
             ex.printStackTrace();                
         }

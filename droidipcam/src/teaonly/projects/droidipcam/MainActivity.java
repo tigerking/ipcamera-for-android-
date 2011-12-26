@@ -176,6 +176,23 @@ public class MainActivity extends Activity {
        }
     }
 
+    private boolean startStreaming() {
+        if ( inStreaming == true)
+            return false;
+
+        btnStart.setEnabled(false);
+        myCamView.PrepareMedia();
+        boolean ret = myCamView.StartStreaming(nativeAgt.GetCameraWriteFD());
+        if ( ret == false)
+            return false;
+        
+        return true;
+    }
+
+    private void stopStreaming() {
+        myCamView.StopMedia(); 
+    }
+
     private void doAction() {
          if ( inServer == false) {
             myCamView.PrepareMedia();
@@ -236,13 +253,16 @@ public class MainActivity extends Activity {
     StreamingServer.OnRequestListen streamingRequest = new StreamingServer.OnRequestListen() {
         @Override
         public InputStream onRequest() {
-            /*
-            if (inStreaming == true) {
-                return null;
-            }            
-            */
             Log.d("TEAONLY", "Request live streaming...");
-
+            if ( startStreaming() == false)
+                return null;
+            try {
+                InputStream ins = nativeAgt.GetCameraReadStream();
+                return ins;
+            } catch (IOException e) {
+                e.printStackTrace();
+                stopStreaming();              
+            } 
             return null;
         }
     };
