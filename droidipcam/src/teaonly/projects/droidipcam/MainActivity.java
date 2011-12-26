@@ -24,7 +24,8 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	private static final int MENU_EXIT = 0xCC882201;
-    
+   
+    NativeAgent nativeAgt;
     CameraView myCamView;
     StreamingServer strServer;
     
@@ -118,9 +119,9 @@ public class MainActivity extends Activity {
             } 
         
             //copyResourceFile(R.raw.index, resourceDir + "index.html"  );
-            copyResourceFile(R.raw.player, resourceDirectory + "player.swf"  );
-            copyResourceFile(R.raw.jwplayer, resourceDirectory + "jwplayer.js"  );
-            copyResourceFile(R.raw.swfobject, resourceDirectory + "swfobject.js"  ); 
+            copyResourceFile(R.raw.player, resourceDirectory + "/player.swf"  );
+            copyResourceFile(R.raw.jwplayer, resourceDirectory + "/jwplayer.js"  );
+            copyResourceFile(R.raw.swfobject, resourceDirectory + "/swfobject.js"  ); 
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -132,6 +133,7 @@ public class MainActivity extends Activity {
         buildResource(); 
 
         NativeAgent.LoadLibraries();
+        nativeAgt = new NativeAgent("teaonly.projects");
 
     	myCamView = (CameraView)findViewById(R.id.surface_overlay);
         SurfaceView sv = (SurfaceView)findViewById(R.id.surface_camera);
@@ -156,6 +158,7 @@ public class MainActivity extends Activity {
 
         try {
             strServer = new StreamingServer(8080, resourceDirectory); 
+            strServer.setOnRequestListen(streamingRequest);
         } catch( IOException e ) {
             e.printStackTrace();
             showToast(this, "Can't start http server..");
@@ -229,7 +232,21 @@ public class MainActivity extends Activity {
         toast.setDuration(Toast.LENGTH_SHORT);
         toast.show();
     }   
-    
+
+    StreamingServer.OnRequestListen streamingRequest = new StreamingServer.OnRequestListen() {
+        @Override
+        public InputStream onRequest() {
+            /*
+            if (inStreaming == true) {
+                return null;
+            }            
+            */
+            Log.d("TEAONLY", "Request live streaming...");
+
+            return null;
+        }
+    };
+
     private OnClickListener startAction = new OnClickListener() {
         @Override
         public void onClick(View v) {

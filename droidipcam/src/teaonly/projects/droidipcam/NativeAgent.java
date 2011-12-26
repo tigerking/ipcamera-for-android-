@@ -22,15 +22,11 @@ public class NativeAgent {
         try {
             localAddress = addr;
             lss = new LocalServerSocket(localAddress);
-
-            BuildCameraSocket();            
-
         } catch ( IOException ex) {
             ex.printStackTrace();
         }
 
     }
-
 
     public void BuildCameraSocket(){
         try {
