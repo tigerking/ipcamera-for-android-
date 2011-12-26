@@ -7,13 +7,17 @@ import android.util.Log;
 
 public class StreamingServer extends NanoHTTPD
 {
+    private File homeDir;
+
     public StreamingServer(int port, String wwwroot) throws IOException
     {
         super(port, new File( wwwroot ).getAbsoluteFile() );
+        homeDir = new File( wwwroot);
     }
 
     public Response serve( String uri, String method, Properties header, Properties parms, Properties files )
     {
+        /*
         Log.d("TEAONLY", method + " '" + uri + "' " );
 
         String msg = "<html><body><h1>Hello server</h1>\n";
@@ -27,6 +31,8 @@ public class StreamingServer extends NanoHTTPD
 
         msg += "</body></html>\n";
         return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, msg );
+        */
+        return serveFile( uri, header, homeDir, true ); 
     }
 
 }

@@ -3,7 +3,7 @@ package teaonly.projects.droidipcam;
 import teaonly.projects.droidipcam.R;
 import teaonly.projects.task.*;
 
-import java.io.IOException;
+import java.io.*;
 
 import android.app.Activity;
 import android.content.Context;
@@ -117,6 +117,11 @@ public class MainActivity extends Activity {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } 
+        
+            //copyResourceFile(R.raw.index, resourceDir + "index.html"  );
+            copyResourceFile(R.raw.player, resourceDirectory + "player.swf"  );
+            copyResourceFile(R.raw.jwplayer, resourceDirectory + "jwplayer.js"  );
+            copyResourceFile(R.raw.swfobject, resourceDirectory + "swfobject.js"  ); 
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -129,8 +134,6 @@ public class MainActivity extends Activity {
 
         NativeAgent.LoadLibraries();
         myAgent = new NativeAgent("teaonly.project");
-        myAgent.setListener( nativeAgentListener );
-        myAgent.execute();
 
     	myCamView = (CameraView)findViewById(R.id.surface_overlay);
         SurfaceView sv = (SurfaceView)findViewById(R.id.surface_camera);
@@ -172,10 +175,6 @@ public class MainActivity extends Activity {
        }
     }
 
- 	private void handleNativeEvent(NativeMessage nativeMsg) {
-		
-	}
-
     private void doAction() {
          if ( inServer == false) {
             myCamView.PrepareMedia();
@@ -204,6 +203,19 @@ public class MainActivity extends Activity {
     
     }
 
+    private void copyResourceFile(int rid, String targetFile) throws IOException {
+        InputStream fin = ((Context)this).getResources().openRawResource(rid);
+        FileOutputStream fos = new FileOutputStream(targetFile);  
+
+        int     length;
+        byte[] buffer = new byte[1024*32]; 
+        while( (length = fin.read(buffer)) != -1){
+            fos.write(buffer,0,length);
+        }
+        fin.close();
+        fos.close();
+    }
+
     private void showToast(Context context, String message) { 
         // create the view
         LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -219,29 +231,12 @@ public class MainActivity extends Activity {
         toast.setDuration(Toast.LENGTH_SHORT);
         toast.show();
     }   
-
-
-    private TaskListener nativeAgentListener = new TaskAdapter() { 
-         @Override
-         public String getName() {
-             return "NativeAgent";
-         }   
-
-         @Override
-         public void onProgressUpdate(GenericTask task, Object param) {
-             String xmlMessage = (String) param;
-             Log.d("TEAONLY", "JAVA:  Get message = " + xmlMessage);
-             NativeMessage msgParser = new NativeMessage();
-             if (msgParser.parse(xmlMessage))
-                 handleNativeEvent(msgParser);
-         }   
-     };   
-
-     private OnClickListener startAction = new OnClickListener() {
+    
+    private OnClickListener startAction = new OnClickListener() {
         @Override
         public void onClick(View v) {
             doAction();
         }
-     };
+    };
 
 }
