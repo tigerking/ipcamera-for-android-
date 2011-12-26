@@ -25,7 +25,6 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 	private static final int MENU_EXIT = 0xCC882201;
     
-    NativeAgent myAgent;
     CameraView myCamView;
     StreamingServer strServer;
     
@@ -133,7 +132,6 @@ public class MainActivity extends Activity {
         buildResource(); 
 
         NativeAgent.LoadLibraries();
-        myAgent = new NativeAgent("teaonly.project");
 
     	myCamView = (CameraView)findViewById(R.id.surface_overlay);
         SurfaceView sv = (SurfaceView)findViewById(R.id.surface_camera);
@@ -185,7 +183,7 @@ public class MainActivity extends Activity {
                 new Handler().postDelayed(new Runnable() { 
                     public void run() { 
                         myCamView.StopMedia();
-                        if ( myAgent.NativeCheckMedia(checkingFile) ) {
+                        if ( NativeAgent.NativeCheckMedia(checkingFile) ) {
                             startServer();    
                         } else {
                             btnStart.setEnabled(true);

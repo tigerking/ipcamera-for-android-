@@ -17,41 +17,89 @@ public class NativeAgent {
     private LocalSocket cameraFoo, cameraBar;
     private LocalSocket muxerFoo, muxerBar;
 
-    private native int nativeCheckMedia(String fileName);
     
 	public NativeAgent(String addr) {
         try {
             localAddress = addr;
             lss = new LocalServerSocket(localAddress);
 
-            ResetCameraSocket();            
+            BuildCameraSocket();            
 
         } catch ( IOException ex) {
             ex.printStackTrace();
         }
+
     }
 
-    public boolean NativeCheckMedia(String filename) {
+
+    public void BuildCameraSocket(){
+        try {
+            cameraFoo = new LocalSocket();
+            cameraFoo.connect(new LocalSocketAddress(localAddress));
+            cameraFoo.setSendBufferSize(1024*128);
+
+            cameraBar = lss.accept();
+            cameraBar.setReceiveBufferSize(1024*128);
+        } catch ( IOException ex) {
+            ex.printStackTrace();                
+        }
+    }
+    public OutputStream GetCameraWriteStream() throws IOException{
+        return cameraFoo.getOutputStream();
+    }
+    public InputStream GetCameraReadStream() throws IOException{
+        return cameraFoo.getInputStream();
+    }
+    public void ReleaseCameraSocket() {
+         try {
+            cameraFoo.close();
+            cameraBar.close();
+        } catch ( IOException ex) {
+            ex.printStackTrace();                
+        }
+        cameraFoo = null;
+        cameraBar = null;
+    }
+
+    public void BuildMuxerSocket(){
+        try {
+            muxerFoo = new LocalSocket();
+            muxerFoo.connect(new LocalSocketAddress(localAddress));
+            muxerFoo.setSendBufferSize(1024*128);
+
+            muxerBar = lss.accept();
+            muxerBar.setReceiveBufferSize(1024*128);
+        } catch ( IOException ex) {
+            ex.printStackTrace();                
+        }
+    }
+    public OutputStream GetMuxerWriteStream() throws IOException{
+        return muxerFoo.getOutputStream();
+    }
+    public InputStream GetMuxerReadStream() throws IOException{
+        return muxerFoo.getInputStream();
+    }
+    public void ReleaseMuxerSocket() {
+         try {
+            muxerFoo.close();
+            muxerBar.close();
+        } catch ( IOException ex) {
+            ex.printStackTrace();                
+        }
+        muxerFoo = null;
+        muxerBar = null;
+    }
+
+
+    static private native int nativeCheckMedia(String fileName);
+    static public boolean NativeCheckMedia(String filename) {
         if (nativeCheckMedia(filename) > 0)
             return true;
         else
             return false;
     }
 
-    public void ResetDataSocket() throws IOException {
-        cameraFoo = new LocalSocket();
-        cameraFoo.connect(new LocalSocketAddress(localAddress));
-        cameraFoo.setSendBufferSize(1024*128);
-
-        cameraBar = lss.accept();
-        cameraBar.setReceiveBufferSize(1024*128);
-    }
-
-	public OutputStream GetCameraWriteStream() throws IOException{
-        return cameraFoo.getOutputStream();
-    }
-
-	public static void LoadLibraries() {
+    public static void LoadLibraries() {
         //Local library .so files before this activity created.
         System.loadLibrary("ipcamera");		
     }
