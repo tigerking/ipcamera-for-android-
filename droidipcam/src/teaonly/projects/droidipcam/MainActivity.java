@@ -1,7 +1,6 @@
 package teaonly.projects.droidipcam;
 
 import teaonly.projects.droidipcam.R;
-import teaonly.projects.task.*;
 
 import java.io.*;
 
@@ -119,9 +118,9 @@ public class MainActivity extends Activity {
             } 
         
             //copyResourceFile(R.raw.index, resourceDir + "index.html"  );
-            copyResourceFile(R.raw.player, resourceDirectory + "/player.swf"  );
-            copyResourceFile(R.raw.jwplayer, resourceDirectory + "/jwplayer.js"  );
-            copyResourceFile(R.raw.swfobject, resourceDirectory + "/swfobject.js"  ); 
+            //copyResourceFile(R.raw.player, resourceDirectory + "/player.swf"  );
+            //copyResourceFile(R.raw.jwplayer, resourceDirectory + "/jwplayer.js"  );
+            //copyResourceFile(R.raw.swfobject, resourceDirectory + "/swfobject.js"  ); 
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -179,13 +178,15 @@ public class MainActivity extends Activity {
     private boolean startStreaming() {
         if ( inStreaming == true)
             return false;
-
-        btnStart.setEnabled(false);
+        
+        nativeAgt.BuildCameraSocket();
         myCamView.PrepareMedia();
         boolean ret = myCamView.StartStreaming(nativeAgt.GetCameraWriteFD());
-        if ( ret == false)
+        if ( ret == false) {
             return false;
+        } 
         
+        btnStart.setEnabled(false);
         return true;
     }
 

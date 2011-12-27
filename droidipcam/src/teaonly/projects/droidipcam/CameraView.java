@@ -107,7 +107,7 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
         
         myMediaRecorder.setOutputFile(targetFile);
         myMediaRecorder.setMaxDuration(7200000); 	// Set max duration 2 hours
-        myMediaRecorder.setMaxFileSize(1600000000); // Set max file size 16G
+        myMediaRecorder.setMaxFileSize(400000000); // Set max file size 4G
                 
         return realyStart();
     }

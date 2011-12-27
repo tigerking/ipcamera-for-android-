@@ -1,6 +1,5 @@
 package teaonly.projects.droidipcam;
 
-import teaonly.projects.task.*;
 import java.io.*; 
 import java.net.*;
 

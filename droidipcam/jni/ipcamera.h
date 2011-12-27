@@ -16,4 +16,7 @@ extern std::vector<unsigned char> pps_data;
 
 int CheckMedia(const std::string mp4_file);
 
+int StartFormatingMedia(int infd, int outfd);
+void StopFormatingMedia();
+
 #endif

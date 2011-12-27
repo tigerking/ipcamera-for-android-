@@ -40,6 +40,8 @@ public class StreamingServer extends NanoHTTPD
                 res.addHeader( "Content-Length", "-1");
                 res.addHeader( "Connection", "Keep-alive");
                 res.addHeader( "ETag", etag);
+            
+                Log.d("TEAONLY", "Starting streaming server");
                 return res;
             }
         } else {
