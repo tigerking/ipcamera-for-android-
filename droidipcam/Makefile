@@ -1,4 +1,6 @@
 all:
-	/home/frank/proj/android/android-ndk-r6/ndk-build
+	/home/teaonly/xproj/android/android-ndk-r6/ndk-build
+clean:
+	/home/teaonly/xproj/android/android-ndk-r6/ndk-build clean
 
     
