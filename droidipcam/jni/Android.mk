@@ -6,7 +6,8 @@ LOCAL_PATH:= $(call my-dir)
 
 ###########################################################
 # build android libteaony 
-# ( clone from libjingle, for generat NDK appplicaton)
+# libteaonly: clone from libjingle, for generat NDK appplicaton
+#      threads, socket, signal/slot and messages, etc.
 #
 include $(CLEAR_VARS)
 LOCAL_MODULE := libteaonly

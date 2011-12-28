@@ -3,38 +3,42 @@
 
 #include "talk/base/thread.h"
 #include "talk/base/messagequeue.h"
-class JniTask : public talk_base::MessageHandler {  
-    public:
-        virtual void OnMessage(talk_base::Message *msg){
-            printf("KAKA\n");
-        }
+
+class FormatTask : public talk_base::MessageHandler {  
+public:
+    FormatTask(int ifd, int ofd) {
+        infd = ifd;
+        outfd = ofd;
+    }
+    virtual void OnMessage(talk_base::Message *msg);
+private:
+    int infd;
+    int outfd;    
 };
 
-int startServer() {
-    talk_base::Thread *task_thread = new talk_base::Thread();
-    JniTask *jni_task = new JniTask();
+FormatTask *formatTask;
+talk_base::Thread *formatThread;
 
-
-    task_thread->Start();
-    task_thread->Post(jni_task, 0);
-
-
-    //talk_base::Thread* main_thread = talk_base::Thread::Current(); 
-    //main_thread->Run();
-
-    return 0;
-}
 int StartFormatingMedia(int infd, int outfd) {
-    
-    startServer();
+    formatThread = new talk_base::Thread();
+    formatTask = new FormatTask(infd, outfd);
 
-    return 0;
+    formatThread->Start();
+    formatThread->Post(formatTask, 0);
+    return 1;
 }
 
 void StopFormatingMedia() {
-    
+    formatThread->Stop();
     return;
 }
 
+void formatingMedia(int ifd, int ofd) {
+         
+}
+
+void FormatTask::OnMessage(talk_base::Message *msg) {
+    formatingMedia(infd, outfd);        
+}
 
 
