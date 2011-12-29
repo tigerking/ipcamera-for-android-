@@ -144,6 +144,9 @@ public class MainActivity extends Activity {
         btnStart.setOnClickListener(startAction);
         btnStart.setEnabled(true);
 
+        Button btnTest = (Button)findViewById(R.id.btn_test);
+        btnTest.setOnClickListener(testAction);
+
         View  v = (View)findViewById(R.id.layout_setup);
         v.setVisibility(View.VISIBLE);
     }
@@ -181,6 +184,7 @@ public class MainActivity extends Activity {
         
         nativeAgt.BuildCameraSocket();
         myCamView.PrepareMedia();
+        nativeAgt.NativeStartFormatingMedia(nativeAgt.GetCameraReadFD(), nativeAgt.GetCameraWriteFD());
         boolean ret = myCamView.StartStreaming(nativeAgt.GetCameraWriteFD());
         if ( ret == false) {
             return false;
@@ -255,6 +259,7 @@ public class MainActivity extends Activity {
         @Override
         public InputStream onRequest() {
             Log.d("TEAONLY", "Request live streaming...");
+            /*
             if ( startStreaming() == false)
                 return null;
             try {
@@ -264,6 +269,7 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
                 stopStreaming();              
             } 
+            */
             return null;
         }
     };
@@ -272,6 +278,13 @@ public class MainActivity extends Activity {
         @Override
         public void onClick(View v) {
             doAction();
+        }
+    };
+
+    private OnClickListener testAction = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            startStreaming();
         }
     };
 

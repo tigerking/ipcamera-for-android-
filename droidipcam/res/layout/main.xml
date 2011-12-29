@@ -82,6 +82,21 @@
                 android:shadowRadius="1"
                 android:textStyle="bold"            
                 android:text="@string/action_start"/>
+            <Button 
+                android:id="@+id/btn_test"
+                android:layout_height="wrap_content"
+                android:layout_width="128dip"
+                android:layout_marginLeft = "5dip"
+                android:layout_marginRight = "5dip"
+                android:textSize="12dip"
+                android:shadowColor="#FFFFFFFF"
+                android:singleLine="true"
+                android:shadowDx="0"
+                android:shadowDy="2"
+                android:shadowRadius="1"
+                android:textStyle="bold"            
+                android:text="test"/>
+               
         </LinearLayout>
 		
         <LinearLayout

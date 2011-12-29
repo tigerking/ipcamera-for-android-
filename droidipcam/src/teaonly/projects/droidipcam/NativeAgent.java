@@ -39,18 +39,18 @@ public class NativeAgent {
             ex.printStackTrace();                
         }
     }
-    public FileDescriptor GetCameraWriteFD(){
+    public FileDescriptor GetCameraWriteFD() {
         return cameraFoo.getFileDescriptor();
     }
-    public InputStream GetCameraReadStream() throws IOException{
-        return cameraFoo.getInputStream();
+    public FileDescriptor GetCameraReadFD() {
+        return cameraFoo.getFileDescriptor();
     }
     public void ReleaseCameraSocket() {
          try {
             cameraFoo.close();
             cameraBar.close();
         } catch ( IOException ex) {
-            ex.printStackTrace();                
+            ex.printStackTrace();         
         }
         cameraFoo = null;
         cameraBar = null;
@@ -68,7 +68,7 @@ public class NativeAgent {
             ex.printStackTrace();                
         }
     }
-    public FileDescriptor GetMuxerWriteStream() {
+    public FileDescriptor GetMuxerWriteFD() {
         return muxerFoo.getFileDescriptor();
     }
     public InputStream GetMuxerReadStream() throws IOException {
@@ -95,6 +95,12 @@ public class NativeAgent {
         else
             return false;
     }
+    
+    static private native int nativeStartFormatingMedia(FileDescriptor in, FileDescriptor out);
+    static public void NativeStartFormatingMedia(FileDescriptor in, FileDescriptor out) {
+        nativeStartFormatingMedia(in, out);
+    }
+
 
     public static void LoadLibraries() {
         //Local library .so files before this activity created.
