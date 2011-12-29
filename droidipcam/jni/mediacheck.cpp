@@ -6,6 +6,11 @@
 #include <deque>
 #include "ipcamera.h"
 
+
+int video_width = 640;
+int video_height = 480;
+int audio_codec = -1;
+
 int begin_skip = -1;
 std::vector<unsigned char> sps_data;
 std::vector<unsigned char> pps_data;
