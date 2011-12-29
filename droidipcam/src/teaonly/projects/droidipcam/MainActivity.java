@@ -23,7 +23,8 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	private static final int MENU_EXIT = 0xCC882201;
-   
+  
+    StreamingLoop stLoop;
     NativeAgent nativeAgt;
     CameraView myCamView;
     StreamingServer strServer;
@@ -132,7 +133,8 @@ public class MainActivity extends Activity {
         buildResource(); 
 
         NativeAgent.LoadLibraries();
-        nativeAgt = new NativeAgent("teaonly.projects");
+        nativeAgt = new NativeAgent();
+        stLoop = new StreamingLoop("teaonly.projects");
 
     	myCamView = (CameraView)findViewById(R.id.surface_overlay);
         SurfaceView sv = (SurfaceView)findViewById(R.id.surface_camera);
@@ -182,10 +184,11 @@ public class MainActivity extends Activity {
         if ( inStreaming == true)
             return false;
         
-        nativeAgt.BuildCameraSocket();
+        stLoop.InitLoop();
+        nativeAgt.NativeStartFormatingMedia(stLoop.getNativeFileDescriptor() , stLoop.getNativeFileDescriptor());
+
         myCamView.PrepareMedia();
-        nativeAgt.NativeStartFormatingMedia(nativeAgt.GetCameraReadFD(), nativeAgt.GetCameraWriteFD());
-        boolean ret = myCamView.StartStreaming(nativeAgt.GetCameraWriteFD());
+        boolean ret = myCamView.StartStreaming(stLoop.getEncoderFileDescriptor());
         if ( ret == false) {
             return false;
         } 

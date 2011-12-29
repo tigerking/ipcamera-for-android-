@@ -1,8 +1,10 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "talk/base/thread.h"
 #include "talk/base/messagequeue.h"
+#include "ipcamera.h"
 #include "mediabuffer.h"
 
 class FormatTask : public talk_base::MessageHandler {  
@@ -59,7 +61,17 @@ void FormatTask::OnMessage(talk_base::Message *msg) {
 }
 
 void FormatTask::doFormat() {
-    
+    unsigned char tempbuf[1024*32];
+
+    LOGD("Begin reading video data.\n");
+    while(1) {
+        int ret = read(infd, tempbuf, 1024);
+        if ( ret > 0)
+            LOGD("New Vieo Data...............\n");
+        else if ( ret < 0)
+            break;
+    }
+    LOGD("Video data is finish...\n");
 }
 
 
