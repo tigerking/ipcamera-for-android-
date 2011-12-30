@@ -4,7 +4,7 @@
 
 extern "C" {
     JNIEXPORT jint JNICALL JNIDEFINE(nativeCheckMedia)(JNIEnv* env, jclass clz, jstring file_path);
-    JNIEXPORT jint JNICALL JNIDEFINE(nativeStartFormatingMedia)(JNIEnv* env, jclass clz, jobject infdesc, jobject outfdesc);
+    JNIEXPORT jint JNICALL JNIDEFINE(nativeStartStreamingMedia)(JNIEnv* env, jclass clz, jobject infdesc, jobject outfdesc);
 };
 
 static std::string convert_jstring(JNIEnv *env, const jstring &js) {
@@ -37,13 +37,13 @@ int getNativeFd(JNIEnv* env, jclass clz, jobject fdesc) {
     return env->GetIntField(fdesc,fid);
 }
 
-JNIEXPORT jint JNICALL JNIDEFINE(nativeStartFormatingMedia)(JNIEnv* env, jclass clz, jobject infdesc, jobject outfdesc) {
+JNIEXPORT jint JNICALL JNIDEFINE(nativeStartStreamingMedia)(JNIEnv* env, jclass clz, jobject infdesc, jobject outfdesc) {
     int infd = getNativeFd(env, clz, infdesc);
     int outfd = getNativeFd(env, clz, outfdesc);
     if ( (infd == -1) || (outfd == -1) ) {
         return -1;
     }
 
-    return StartFormatingMedia(infd, outfd);
+    return StartStreamingMedia(infd, outfd);
 }
 

@@ -23,9 +23,9 @@ public class NativeAgent {
             return false;
     }
     
-    static private native int nativeStartFormatingMedia(FileDescriptor in, FileDescriptor out);
-    static public void NativeStartFormatingMedia(FileDescriptor in, FileDescriptor out) {
-        nativeStartFormatingMedia(in, out);
+    static private native int nativeStartStreamingMedia(FileDescriptor in, FileDescriptor out);
+    static public void NativeStartStreamingMedia(FileDescriptor in, FileDescriptor out) {
+        nativeStartStreamingMedia(in, out);
     }
 
 

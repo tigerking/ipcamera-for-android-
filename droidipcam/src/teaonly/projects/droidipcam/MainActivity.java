@@ -185,7 +185,7 @@ public class MainActivity extends Activity {
             return false;
         
         stLoop.InitLoop();
-        nativeAgt.NativeStartFormatingMedia(stLoop.getNativeFileDescriptor() , stLoop.getNativeFileDescriptor());
+        nativeAgt.NativeStartStreamingMedia(stLoop.getNativeFileDescriptor() , stLoop.getNativeFileDescriptor());
 
         myCamView.PrepareMedia();
         boolean ret = myCamView.StartStreaming(stLoop.getEncoderFileDescriptor());

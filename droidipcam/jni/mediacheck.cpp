@@ -7,13 +7,7 @@
 #include "ipcamera.h"
 
 
-int video_width = 640;
-int video_height = 480;
-int audio_codec = -1;
-
-int begin_skip = -1;
-std::vector<unsigned char> sps_data;
-std::vector<unsigned char> pps_data;
+MediaCheckInfo mediaInfo;
 
 /*
    put_byte(pb, 1);      // version 
@@ -38,16 +32,22 @@ void getHeader(FILE *fp) {
 
     int sps_size = (temp_buffer[5] << 8) + temp_buffer[6];
     for(int i = 0; i < sps_size; i++) {
-        sps_data.push_back( temp_buffer[7+i] );
+        mediaInfo.sps_data.push_back( temp_buffer[7+i] );
     }
 
     int pps_size = (temp_buffer[8 + sps_size] << 8) + temp_buffer[9 + sps_size];
     for(int i = 0; i < pps_size; i++) {
-        pps_data.push_back( temp_buffer[10 + sps_size + i] );
+        mediaInfo.pps_data.push_back( temp_buffer[10 + sps_size + i] );
     }
 }
-
+    
 int CheckMedia(const std::string mp4_file) {
+    mediaInfo.video_width = 640;
+    mediaInfo.video_height = 480;
+    mediaInfo.audio_codec = -1;
+
+
+
     std::deque<unsigned char> mdat;
     std::deque<unsigned char> avcC;
 
@@ -57,7 +57,7 @@ int CheckMedia(const std::string mp4_file) {
     }
     avcC.push_back(0);
 
-    begin_skip = -1;
+    mediaInfo.begin_skip = -1;
     FILE *fp = fopen( mp4_file.c_str(), "rb");
     unsigned char c;
 
@@ -72,17 +72,17 @@ int CheckMedia(const std::string mp4_file) {
                 && mdat[1] == 'd'
                 && mdat[2] == 'a'
                 && mdat[3] == 't') {
-            begin_skip = pos;
+            mediaInfo.begin_skip = pos;
             std::cout << "Found MDAT skipped = "<< pos << std::endl;
             break; 
         }
     } 
 
-    if ( begin_skip < 0)
+    if ( mediaInfo.begin_skip < 0)
         return 0;
 
-    sps_data.clear();
-    pps_data.clear();
+    mediaInfo.sps_data.clear();
+    mediaInfo.pps_data.clear();
 
     // 1. get pps and sps data
     while( !feof(fp) ) {

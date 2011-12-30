@@ -10,15 +10,19 @@
 #define  LOG_TAG    "TEAONLY"
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)  
 
-extern int video_width, video_height;
-extern int audio_codec;
-extern int begin_skip;
-extern std::vector<unsigned char> sps_data;
-extern std::vector<unsigned char> pps_data;
+struct MediaCheckInfo {
+public:    
+    int video_width, video_height;
+    int audio_codec;
+    int begin_skip;
+    std::vector<unsigned char> sps_data;
+    std::vector<unsigned char> pps_data;
+};
 
+extern MediaCheckInfo mediaInfo;
 int CheckMedia(const std::string mp4_file);
 
-int StartFormatingMedia(int infd, int outfd);
-void StopFormatingMedia();
+int StartStreamingMedia(int infd, int outfd);
+void StopStreamingMedia();
 
 #endif
