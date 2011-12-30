@@ -46,8 +46,6 @@ int CheckMedia(const std::string mp4_file) {
     mediaInfo.video_height = 480;
     mediaInfo.audio_codec = -1;
 
-
-
     std::deque<unsigned char> mdat;
     std::deque<unsigned char> avcC;
 

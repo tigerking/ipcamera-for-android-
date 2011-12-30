@@ -1,13 +1,7 @@
 #include <string.h>
+#include "ipcamera.h"
 #include "mediabuffer.h"
 
-#ifdef JNI_BASE
-#include <android/log.h>
-#define  LOG_TAG    "MVRS"
-#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)  
-#else
-#define LOGD(...)  {}
-#endif
 
 MediaBuffer::MediaBuffer(const unsigned int vpkg_number,
                          const unsigned int apkg_number,

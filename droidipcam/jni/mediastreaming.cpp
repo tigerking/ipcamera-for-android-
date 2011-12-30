@@ -6,8 +6,7 @@
 #include "talk/base/messagequeue.h"
 #include "ipcamera.h"
 #include "mediabuffer.h"
-
-const int MAX_VIDEO_PACKAGE = 384*1024;
+#include "mediapak.h"
 
 class StreamingTask : public talk_base::MessageHandler {  
 public:
@@ -81,7 +80,15 @@ void StreamingTask::beginTask() {
     unsigned char *buf;
     buf = new unsigned char[1024*512];
 
+    FlashVideoPackager *flvPackager = new FlashVideoPackager();
+    FILE *fp = fopen ("/sdcard/streaming.flv", "wb");
+    flvPackager->setParameter(640, 480, 30);
+    flvPackager->addVideoHeader(&mediaInfo.sps_data[0], mediaInfo.sps_data.size(), &mediaInfo.pps_data[0], mediaInfo.pps_data.size());
+    fwrite(flvPackager->getBuffer(), flvPackager->bufferLength(), 1, fp);
+    flvPackager->resetBuffer();
+
     unsigned int last_frame_num = 0;
+    int frame_count = 0;
     while(1) {
 
         // find video slice data from es streaming 
@@ -104,8 +111,15 @@ void StreamingTask::beginTask() {
                 snprintf(temp, 128, "%d,  %d, %d", slice_type, frame_num, nal_length);
                 LOGD(temp);
             }
-            fillBuffer(buf, nal_length - 5);
-            
+
+            for(int i = 0; i < (int)video_check_pattern.size(); i++) {
+                buf[i] = video_check_pattern[i];
+            }
+            fillBuffer( &buf[video_check_pattern.size()] , nal_length - (video_check_pattern.size() - 4) );
+            flvPackager->addVideoFrame( buf, nal_length + 4, slice_type, frame_count*30);
+            fwrite(flvPackager->getBuffer(), flvPackager->bufferLength(), 1, fp);
+            flvPackager->resetBuffer();
+            frame_count++;
         }
     }
     delete buf;
@@ -133,7 +147,7 @@ int StreamingTask::checkSingleSliceNAL(const std::deque<unsigned char> &pattern 
     }  
 
     // 3. checking fist_mb (should be 0), slice type should be I or P, 
-    //    frame_num should 
+    //    frame_num should be continued. 
     // Only following pattens are supported. 
     //  
     // I Frame: b 1011 1***   (first_mb = 0, slice_type = 2, pps_id = 0)   
@@ -206,5 +220,4 @@ int StreamingTask::fillBuffer(unsigned char *buf, unsigned int len) {
   }
   return len;
 }
-
 

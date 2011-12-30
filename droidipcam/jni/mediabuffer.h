@@ -49,11 +49,6 @@ public:
     return abuffer_.size();
   }
 
-  /*
-  // callback for some exceptions.
-  sigslot::signal0<> SignalBufferOverflow;
-  sigslot::signal0<> SignalTooBigPackage;
-  */
   MediaPackage *vpkg_inused;
 
 private:

@@ -60,7 +60,9 @@ static uint32_t endian_fix32( uint32_t x )
 
 FlashVideoPackager::FlashVideoPackager()
 {
-	putTag( "FLV" ); 	// Signature
+	resetBuffer();
+
+    putTag( "FLV" ); 	// Signature
 	putByte( 1 );    	// Version
 
 #ifdef VIDEO_ONLY	
@@ -250,7 +252,7 @@ void FlashVideoPackager::addVideoHeader(unsigned char *sps, unsigned int sps_siz
 	//frame data : PPS
 	putByte( 1 ); 		// number of pps
 	putBE16( pps_size);
-	appendData( sps + sps_size + 4, pps_size);
+	appendData( pps, pps_size);
 
 	putBE32( frame_size + 11 );	 	// Last tag size
 }

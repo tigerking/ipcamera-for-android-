@@ -2,8 +2,8 @@
 #define _MEDIAPAK_H_
 
 #include <stdint.h>
+#include "ipcamera.h"
 
-#define MAX_BUFFER_LENGTH  1024*1024
 class FlashVideoPackager
 {
 	public:
@@ -42,7 +42,7 @@ class FlashVideoPackager
 		void appendData(uint8_t *data, unsigned int size);
 
 	private:
-		unsigned char mediaBuffer[1024*384];		//for our hardware the buffer is OK.
+		unsigned char mediaBuffer[MAX_VIDEO_PACKAGE];		//for our hardware the buffer is OK.
 		unsigned int mediaLength;
 };
 

@@ -7,6 +7,8 @@
 #include <android/log.h>
 
 
+const int MAX_VIDEO_PACKAGE = 384*1024;
+
 #define  LOG_TAG    "TEAONLY"
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)  
 
