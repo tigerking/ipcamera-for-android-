@@ -59,10 +59,13 @@ void MediaBuffer::Reset() {
   abuffer_.clear();
 }
 
-bool MediaBuffer::pushVideoPackage(const unsigned char *d, const unsigned int len, const unsigned int ts) {
+bool MediaBuffer::pushVideoPackage(const unsigned char *d, const unsigned int len, const unsigned int ts, const unsigned int isIntra) {
+  static unsigned int global_seq_count = 0;
   MediaPackage *pkg = NULL;
   bool valid = false;
  
+  global_seq_count ++;
+
   // 1. check memory space.
   if ( len > vpkg_size_ ) {
     return false;
@@ -82,10 +85,9 @@ bool MediaBuffer::pushVideoPackage(const unsigned char *d, const unsigned int le
   if ( pkg == NULL) {
       valid = true;                                     // first frame
   } else {
-    if ( (pkg->ts + 1) == ts ){
+    if ( (pkg->seq + 1) == global_seq_count ){
       valid = true;                                     // continued frame
-    } else if ( ((d[4] & 0x70) == 0x30) ||
-        ((d[4] & 0x7F) == 0x08) ){
+    } else if ( isIntra ){
       valid = true;                                     // new intra frame
     }
   }
@@ -102,7 +104,12 @@ bool MediaBuffer::pushVideoPackage(const unsigned char *d, const unsigned int le
   }
   pkg->ts = ts;
   pkg->length = len;
-  pkg->media_type = MEDIA_TYPE_VIDEO;
+  pkg->seq = global_seq_count;
+  if ( isIntra )
+    pkg->media_type = MEDIA_TYPE_VIDEO_KEYFRAME;
+  else
+    pkg->media_type = MEDIA_TYPE_VIDEO;
+
   memcpy(pkg->data, d, len);
   {
     talk_base::CritScope lock(&mutex_);
@@ -143,12 +150,16 @@ bool MediaBuffer::pushAudioPackage(const unsigned char *d, const unsigned int le
 }
 
 bool MediaBuffer::PushBuffer(const unsigned char *d, const unsigned int len, 
-    unsigned int ts, const MEDIA_TYPE mt) {
+        unsigned int ts, const MEDIA_TYPE mt) {
+
   bool ret;
-  if ( mt == MEDIA_TYPE_VIDEO )
-      ret =  pushVideoPackage(d,len,ts);
-  else
+  if ( mt == MEDIA_TYPE_VIDEO ) {
+      ret =  pushVideoPackage(d,len,ts,0);
+  } else if ( mt == MEDIA_TYPE_VIDEO_KEYFRAME) {
+      ret = pushVideoPackage(d,len,ts,1);
+  } else {
       ret = pushAudioPackage(d,len,ts);
+  }
 
   return ret;
 }
@@ -156,10 +167,10 @@ bool MediaBuffer::PushBuffer(const unsigned char *d, const unsigned int len,
 bool MediaBuffer::PullBuffer(MediaPackage **ppkg,const MEDIA_TYPE mt) {
   std::list<MediaPackage *> *pBuffer;
 
-  if ( mt == MEDIA_TYPE_VIDEO )
-    pBuffer = &vbuffer_;
-  else
+  if ( mt == MEDIA_TYPE_AUDIO )
     pBuffer = &abuffer_;
+  else
+    pBuffer = &vbuffer_;
 
   if (pBuffer->size() == 0)
       return false;
@@ -168,7 +179,8 @@ bool MediaBuffer::PullBuffer(MediaPackage **ppkg,const MEDIA_TYPE mt) {
   
   vpkg_released->ts = pkg->ts;
   vpkg_released->length = pkg->length;
-  vpkg_released->media_type = mt;
+  vpkg_released->media_type = pkg->media_type;
+  vpkg_released->seq = pkg->seq;
   memcpy(vpkg_released->data, pkg->data, vpkg_released->length);
   *ppkg = vpkg_released;
 
@@ -181,12 +193,12 @@ void MediaBuffer::releaseBuffer(MediaPackage *pkg) {
   std::list<MediaPackage *> *pBuffer;
   std::vector<MediaPackage *> *pPool;
 
-  if ( pkg->media_type == MEDIA_TYPE_VIDEO ) {
-    pBuffer = &vbuffer_;
-    pPool = &vpkg_pool_;
-  } else {
+  if ( pkg->media_type == MEDIA_TYPE_AUDIO ) {
     pBuffer = &abuffer_;
     pPool = &apkg_pool_;
+  } else {
+    pBuffer = &vbuffer_;
+    pPool = &vpkg_pool_;
   }
 
   { 

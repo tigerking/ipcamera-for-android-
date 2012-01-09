@@ -8,46 +8,52 @@
 #include "mediabuffer.h"
 #include "mediapak.h"
 
-class StreamingTask : public talk_base::MessageHandler {  
-public:
-    StreamingTask(int ifd, int ofd);
 
-public:    
-    enum {
-        MSG_BEGIN_TASK,
-        MSG_END_TASK,    
-    };
+class MediaStreamer : public sigslot::has_slots<>, public talk_base::MessageHandler {  
+public:
+    MediaStreamer(int ifd, int ofd);
+    ~MediaStreamer();
 
 protected:    
     virtual void OnMessage(talk_base::Message *msg);
-    void beginTask();
+
+    void doCapture();
     int checkSingleSliceNAL(const std::deque<unsigned char> &pattern , int &slice_type, unsigned int &frame_num);
     int fillBuffer(unsigned char *buf, unsigned int len);
+    
+    void doStreaming();
 
 private:
+    enum {
+        MSG_BEGIN_CAPTURE_TASK,
+        MSG_BEGIN_STREAMING_TASK,
+    };
+
     int infd;
     int outfd;    
     int frame_num_length;
 
+    talk_base::Thread *captureThread;
+    talk_base::Thread *streamingThread;
 public:
     static MediaBuffer *mediaBuffer;
-    static StreamingTask *streamingTask;
-    static talk_base::Thread *streamingThread;
+    static MediaStreamer *mediaStreamer;    
 };
 
-MediaBuffer *StreamingTask::mediaBuffer;
-StreamingTask *StreamingTask::streamingTask;
-talk_base::Thread *StreamingTask::streamingThread;
+MediaBuffer* MediaStreamer::mediaBuffer = NULL;
+MediaStreamer* MediaStreamer::mediaStreamer = NULL;
 
 int StartStreamingMedia(int infd, int outfd) {
-    if ( StreamingTask::mediaBuffer == NULL)
-        StreamingTask::mediaBuffer = new MediaBuffer(32, 120, MAX_VIDEO_PACKAGE, 1024); 
 
-    StreamingTask::streamingThread = new talk_base::Thread();
-    StreamingTask::streamingTask = new StreamingTask(infd, outfd);
+    if ( MediaStreamer::mediaBuffer == NULL)
+        MediaStreamer::mediaBuffer = new MediaBuffer(32, 120, MAX_VIDEO_PACKAGE, 1024); 
+    MediaStreamer::mediaBuffer->Reset(); 
 
-    StreamingTask::streamingThread->Start();
-    StreamingTask::streamingThread->Post(StreamingTask::streamingTask, StreamingTask::MSG_BEGIN_TASK);
+    if ( MediaStreamer::mediaStreamer != NULL) {
+        delete MediaStreamer::mediaStreamer;
+    }
+    MediaStreamer::mediaStreamer = new MediaStreamer(infd, outfd);
+
     return 1;
 }
 
@@ -55,41 +61,59 @@ void StopStreamingMedia() {
     return;
 }
 
-StreamingTask::StreamingTask(int ifd, int ofd) {
+MediaStreamer::MediaStreamer(int ifd, int ofd) {
     frame_num_length = -1;
     infd = ifd;
     outfd = ofd;
-    mediaBuffer->Reset(); 
+    
+    captureThread = new talk_base::Thread();
+    captureThread->Start();
+    captureThread->Post(this, MSG_BEGIN_CAPTURE_TASK);
+    
+    streamingThread = new talk_base::Thread();
+    streamingThread->Start();
+    streamingThread->Post(this, MSG_BEGIN_STREAMING_TASK);
 }
 
-void StreamingTask::OnMessage(talk_base::Message *msg) {
+MediaStreamer::~MediaStreamer() {
+    
+}
+
+void MediaStreamer::OnMessage(talk_base::Message *msg) {
     switch( msg->message_id) {
-        case MSG_BEGIN_TASK:
-            beginTask();        
+        case MSG_BEGIN_CAPTURE_TASK:
+            doCapture();        
             break;
 
-        case MSG_END_TASK:
+        case MSG_BEGIN_STREAMING_TASK:
+            doStreaming();
+            break;
+
+        default:
             break;
     }
 }
 
-void StreamingTask::beginTask() {
+void MediaStreamer::doCapture() {
     std::deque<unsigned char> video_check_pattern;
     video_check_pattern.resize(9, 0x00);
     
     unsigned char *buf;
     buf = new unsigned char[1024*512];
 
-    FlashVideoPackager *flvPackager = new FlashVideoPackager();
+    /*
     FILE *fp = fopen ("/sdcard/streaming.flv", "wb");
     flvPackager->setParameter(640, 480, 30);
     flvPackager->addVideoHeader(&mediaInfo.sps_data[0], mediaInfo.sps_data.size(), &mediaInfo.pps_data[0], mediaInfo.pps_data.size());
     fwrite(flvPackager->getBuffer(), flvPackager->bufferLength(), 1, fp);
     flvPackager->resetBuffer();
+    */
 
     unsigned int last_frame_num = 0;
     int frame_count = 0;
     while(1) {
+        if ( infd < 0)
+            break;
 
         // find video slice data from es streaming 
         unsigned char current_byte;
@@ -103,7 +127,7 @@ void StreamingTask::beginTask() {
         int nal_length = checkSingleSliceNAL( video_check_pattern, slice_type, frame_num );
         if ( nal_length > 0) {
             if ( (frame_num != 0) && (frame_num != (last_frame_num + 1) ) ) {
-                LOGD("Error, wrong number");
+                LOGD("Error, wrong number, FIXME FIXME");
             }
             last_frame_num = frame_num;
             {
@@ -115,10 +139,15 @@ void StreamingTask::beginTask() {
             for(int i = 0; i < (int)video_check_pattern.size(); i++) {
                 buf[i] = video_check_pattern[i];
             }
-            fillBuffer( &buf[video_check_pattern.size()] , nal_length - (video_check_pattern.size() - 4) );
+            if ( fillBuffer( &buf[video_check_pattern.size()] , nal_length - (video_check_pattern.size() - 4) ) < 0)
+                break;
+            /*
             flvPackager->addVideoFrame( buf, nal_length + 4, slice_type, frame_count*30);
             fwrite(flvPackager->getBuffer(), flvPackager->bufferLength(), 1, fp);
             flvPackager->resetBuffer();
+            */
+            mediaBuffer->PushBuffer( buf, nal_length + 4, frame_count*33, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
+
             frame_count++;
         }
     }
@@ -126,7 +155,7 @@ void StreamingTask::beginTask() {
 
 }
 
-int StreamingTask::checkSingleSliceNAL(const std::deque<unsigned char> &pattern , int &slice_type, unsigned int &frame_num) {   
+int MediaStreamer::checkSingleSliceNAL(const std::deque<unsigned char> &pattern , int &slice_type, unsigned int &frame_num) {   
     
     // 1. first we check NAL's size, valid size should less than 192K 
     if ( pattern[0] != 0x00)
@@ -206,7 +235,7 @@ int StreamingTask::checkSingleSliceNAL(const std::deque<unsigned char> &pattern 
     return nal_length;
 }
 
-int StreamingTask::fillBuffer(unsigned char *buf, unsigned int len) {
+int MediaStreamer::fillBuffer(unsigned char *buf, unsigned int len) {
   while(len > 0) {
     int ret = read(infd, buf, len);
     
@@ -221,3 +250,6 @@ int StreamingTask::fillBuffer(unsigned char *buf, unsigned int len) {
   return len;
 }
 
+void MediaStreamer::doStreaming() {
+    
+}

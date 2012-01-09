@@ -8,10 +8,11 @@
 
 enum MEDIA_TYPE {
   MEDIA_TYPE_AUDIO,
-  MEDIA_TYPE_VIDEO,
+  MEDIA_TYPE_VIDEO, 
+  MEDIA_TYPE_VIDEO_KEYFRAME,
 };
 
-const int MUX_OFFSET = 160;
+const int MUX_OFFSET = 32;
 struct MediaPackage{
 public:
   MediaPackage(const unsigned int size) {
@@ -28,6 +29,7 @@ public:
   unsigned char *data;
   unsigned int length;
   unsigned int ts;
+  unsigned int seq;
   MEDIA_TYPE media_type;	
 };
 
@@ -53,7 +55,7 @@ public:
 
 private:
   bool pushAudioPackage(const unsigned char *d, const unsigned int len, const unsigned int ts);
-  bool pushVideoPackage(const unsigned char *d, const unsigned int len, const unsigned int ts);
+  bool pushVideoPackage(const unsigned char *d, const unsigned int len, const unsigned int ts, const unsigned int isIntra);
   void releaseBuffer(MediaPackage *pkg);
 
 private:
@@ -69,7 +71,5 @@ private:
 
   talk_base::CriticalSection mutex_; 
 };
-
-
 
 #endif
