@@ -27,7 +27,10 @@ public class NativeAgent {
     static public void NativeStartStreamingMedia(FileDescriptor in, FileDescriptor out) {
         nativeStartStreamingMedia(in, out);
     }
-
+    static private native void nativeStopStreamingMedia();
+    static public void NativeStopStreamingMedia() {
+        nativeStopStreamingMedia();
+    }
 
     public static void LoadLibraries() {
         //Local library .so files before this activity created.

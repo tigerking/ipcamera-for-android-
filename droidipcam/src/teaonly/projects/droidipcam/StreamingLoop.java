@@ -5,6 +5,7 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
@@ -25,16 +26,24 @@ public class StreamingLoop
 		localAddress = addr;
 	}
 	
-	public FileDescriptor getEncoderFileDescriptor()
+	public FileDescriptor getSenderFileDescriptor()
 	{
 		return sender.getFileDescriptor();
 	}
     
-    public FileDescriptor getNativeFileDescriptor()
+    public FileDescriptor getReceiverFileDescriptor()
     {
         return receiver.getFileDescriptor();
     }
-        
+   
+    public InputStream getInputStream() throws IOException{
+       return receiver.getInputStream(); 
+    }
+
+    public OutputStream getOutputStream() throws IOException{
+       return sender.getOutputStream();
+    }
+
 	public void ReleaseLoop()
 	{
 		try {

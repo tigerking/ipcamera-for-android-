@@ -43,15 +43,12 @@ public:
   bool PushBuffer(const unsigned char *d, const unsigned int len, const unsigned int ts, const MEDIA_TYPE mt);
   bool PullBuffer(MediaPackage **ppkg, const MEDIA_TYPE mt);
 
-
   unsigned int VBufferSize(){
     return vbuffer_.size();
   }
   unsigned int ABufferSize() {
     return abuffer_.size();
   }
-
-  MediaPackage *vpkg_inused;
 
 private:
   bool pushAudioPackage(const unsigned char *d, const unsigned int len, const unsigned int ts);

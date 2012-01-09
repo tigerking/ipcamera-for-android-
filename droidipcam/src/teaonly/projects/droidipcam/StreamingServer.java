@@ -10,6 +10,7 @@ public class StreamingServer extends NanoHTTPD
 {
     public static interface OnRequestListen {
         public abstract InputStream onRequest();
+        public abstract void requestDone();
     }
 
     private OnRequestListen myRequestListen = null;
@@ -18,6 +19,10 @@ public class StreamingServer extends NanoHTTPD
     public StreamingServer(int port, String wwwroot) throws IOException {
         super(port, new File( wwwroot ).getAbsoluteFile() );
         homeDir = new File( wwwroot);
+    }
+    
+    public void setOnRequestListen( OnRequestListen orl) {
+        myRequestListen = orl;
     }
 
     public Response serve( String uri, String method, Properties header, Properties parms, Properties files ) {
@@ -49,9 +54,13 @@ public class StreamingServer extends NanoHTTPD
         }
     }
 
-    public void setOnRequestListen( OnRequestListen orl) {
-        myRequestListen = orl;
+    public void serveDone( Response r) {
+        if ( r.mimeType.equalsIgnoreCase("video/x-flv") ) {
+            if ( myRequestListen != null) {
+                myRequestListen.requestDone();
+            }    
+        }
     }
-
+    
     
 }

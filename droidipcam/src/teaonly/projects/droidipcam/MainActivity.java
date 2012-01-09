@@ -24,7 +24,9 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 	private static final int MENU_EXIT = 0xCC882201;
   
-    StreamingLoop stLoop;
+    StreamingLoop cameraLoop;
+    StreamingLoop httpLoop;
+
     NativeAgent nativeAgt;
     CameraView myCamView;
     StreamingServer strServer;
@@ -134,7 +136,8 @@ public class MainActivity extends Activity {
 
         NativeAgent.LoadLibraries();
         nativeAgt = new NativeAgent();
-        stLoop = new StreamingLoop("teaonly.projects");
+        cameraLoop = new StreamingLoop("teaonly.projects");
+        httpLoop = new StreamingLoop("teaonly.http");
 
     	myCamView = (CameraView)findViewById(R.id.surface_overlay);
         SurfaceView sv = (SurfaceView)findViewById(R.id.surface_camera);
@@ -184,11 +187,12 @@ public class MainActivity extends Activity {
         if ( inStreaming == true)
             return false;
         
-        stLoop.InitLoop();
-        nativeAgt.NativeStartStreamingMedia(stLoop.getNativeFileDescriptor() , stLoop.getNativeFileDescriptor());
+        cameraLoop.InitLoop();
+        httpLoop.InitLoop();
+        nativeAgt.NativeStartStreamingMedia(cameraLoop.getReceiverFileDescriptor() , httpLoop.getSenderFileDescriptor());
 
         myCamView.PrepareMedia();
-        boolean ret = myCamView.StartStreaming(stLoop.getEncoderFileDescriptor());
+        boolean ret = myCamView.StartStreaming(cameraLoop.getSenderFileDescriptor());
         if ( ret == false) {
             return false;
         } 
@@ -198,7 +202,15 @@ public class MainActivity extends Activity {
     }
 
     private void stopStreaming() {
+        if ( inStreaming == false)
+            return;
+
         myCamView.StopMedia(); 
+        httpLoop.ReleaseLoop();
+        cameraLoop.ReleaseLoop();
+        
+        nativeAgt.NativeStopStreamingMedia();
+        btnStart.setEnabled(true);
     }
 
     private void doAction() {
@@ -262,18 +274,23 @@ public class MainActivity extends Activity {
         @Override
         public InputStream onRequest() {
             Log.d("TEAONLY", "Request live streaming...");
-            /*
             if ( startStreaming() == false)
                 return null;
             try {
-                InputStream ins = nativeAgt.GetCameraReadStream();
+                InputStream ins = httpLoop.getInputStream(); 
                 return ins;
             } catch (IOException e) {
                 e.printStackTrace();
                 stopStreaming();              
             } 
-            */
+            Log.d("TEAONLY", "Return a null response to request");
             return null;
+        }
+        
+        @Override 
+        public void requestDone() {
+            Log.d("TEAONLY", "Request live streaming is Done!");
+            stopStreaming();     
         }
     };
 

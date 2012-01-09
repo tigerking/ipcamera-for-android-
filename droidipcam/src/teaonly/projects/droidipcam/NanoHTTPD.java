@@ -113,6 +113,15 @@ public class NanoHTTPD
 		return serveFile( uri, header, myRootDir, true );
 	}
 
+    /**
+     * Override this to handle a request is done.
+     * 
+     * (By default, do nothing)
+     *
+     */
+    public void serveDone(Response r) {
+    }
+
 	/**
 	 * HTTP response.
 	 * Return one of these from serve().
@@ -439,6 +448,9 @@ public class NanoHTTPD
 
 				in.close();
 				is.close();
+                
+                // Ok, finish this http request
+                serveDone(r);
 			}
 			catch ( IOException ioe )
 			{
@@ -452,7 +464,8 @@ public class NanoHTTPD
 			{
 				// Thrown by sendError, ignore and exit the thread.
 			}
-		}
+            
+	    }
 
 		/**
 		 * Decodes the sent headers and loads the data into

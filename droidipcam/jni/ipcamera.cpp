@@ -5,6 +5,7 @@
 extern "C" {
     JNIEXPORT jint JNICALL JNIDEFINE(nativeCheckMedia)(JNIEnv* env, jclass clz, jstring file_path);
     JNIEXPORT jint JNICALL JNIDEFINE(nativeStartStreamingMedia)(JNIEnv* env, jclass clz, jobject infdesc, jobject outfdesc);
+    JNIEXPORT void JNICALL JNIDEFINE(nativeStopStreamingMedia)(JNIEnv* env, jclass clz);
 };
 
 static std::string convert_jstring(JNIEnv *env, const jstring &js) {
@@ -47,3 +48,6 @@ JNIEXPORT jint JNICALL JNIDEFINE(nativeStartStreamingMedia)(JNIEnv* env, jclass 
     return StartStreamingMedia(infd, outfd);
 }
 
+JNIEXPORT void JNICALL JNIDEFINE(nativeStopStreamingMedia)(JNIEnv* env, jclass clz) {
+    StopStreamingMedia();    
+}

@@ -13,6 +13,8 @@ class MediaStreamer : public sigslot::has_slots<>, public talk_base::MessageHand
 public:
     MediaStreamer(int ifd, int ofd);
     ~MediaStreamer();
+    void Start();
+    void Stop();
 
 protected:    
     virtual void OnMessage(talk_base::Message *msg);
@@ -20,6 +22,7 @@ protected:
     void doCapture();
     int checkSingleSliceNAL(const std::deque<unsigned char> &pattern , int &slice_type, unsigned int &frame_num);
     int fillBuffer(unsigned char *buf, unsigned int len);
+    int flushBuffer(unsigned char *buf, unsigned int len);
     
     void doStreaming();
 
@@ -53,12 +56,15 @@ int StartStreamingMedia(int infd, int outfd) {
         delete MediaStreamer::mediaStreamer;
     }
     MediaStreamer::mediaStreamer = new MediaStreamer(infd, outfd);
+    MediaStreamer::mediaStreamer->Start();
 
     return 1;
 }
 
 void StopStreamingMedia() {
-    return;
+    // release object in the begin of netxt request
+    if ( MediaStreamer::mediaStreamer != NULL)  
+         MediaStreamer::mediaStreamer->Stop();
 }
 
 MediaStreamer::MediaStreamer(int ifd, int ofd) {
@@ -66,6 +72,20 @@ MediaStreamer::MediaStreamer(int ifd, int ofd) {
     infd = ifd;
     outfd = ofd;
     
+    captureThread = NULL;
+    streamingThread = NULL;    
+}
+
+MediaStreamer::~MediaStreamer() {
+    if ( streamingThread != NULL) {
+        delete streamingThread;
+    } 
+    if ( captureThread != NULL) {
+        delete captureThread;
+    }
+}
+
+void MediaStreamer::Start() {
     captureThread = new talk_base::Thread();
     captureThread->Start();
     captureThread->Post(this, MSG_BEGIN_CAPTURE_TASK);
@@ -75,8 +95,15 @@ MediaStreamer::MediaStreamer(int ifd, int ofd) {
     streamingThread->Post(this, MSG_BEGIN_STREAMING_TASK);
 }
 
-MediaStreamer::~MediaStreamer() {
+void MediaStreamer::Stop() {
+    infd = 0;
+    outfd = 0;
     
+    if ( streamingThread != NULL)
+        streamingThread->Quit();
+
+    if ( captureThread != NULL)
+        captureThread->Quit();
 }
 
 void MediaStreamer::OnMessage(talk_base::Message *msg) {
@@ -237,12 +264,33 @@ int MediaStreamer::checkSingleSliceNAL(const std::deque<unsigned char> &pattern 
 
 int MediaStreamer::fillBuffer(unsigned char *buf, unsigned int len) {
   while(len > 0) {
-    int ret = read(infd, buf, len);
+    int ret = recv(infd, buf, len, 0);
     
     if ( ret < 0)
         return -1;
     if ( ret == 0)
         continue;
+    
+    if ( infd < 0)
+        return -1;
+
+    len -= ret;
+    buf += ret;
+  }
+  return len;
+}
+
+int MediaStreamer::flushBuffer(unsigned char *buf, unsigned int len) {
+  while(len > 0) {
+    int ret = send(outfd, buf, len, 0);
+    
+    if ( ret < 0)
+        return -1;
+    if ( ret == 0)
+        continue;
+
+    if ( outfd < 0)
+        return -1;
 
     len -= ret;
     buf += ret;
@@ -251,5 +299,32 @@ int MediaStreamer::fillBuffer(unsigned char *buf, unsigned int len) {
 }
 
 void MediaStreamer::doStreaming() {
-    
+
+    MediaPackage *media_package;
+    FlashVideoPackager *flvPackager = new FlashVideoPackager();
+    flvPackager->setParameter(640, 480, 30);
+    flvPackager->addVideoHeader(&mediaInfo.sps_data[0], mediaInfo.sps_data.size(), &mediaInfo.pps_data[0], mediaInfo.pps_data.size());
+ 
+    while(1) {
+        if ( outfd < 0)
+            break;
+
+        media_package = NULL;
+        if ( mediaBuffer->PullBuffer(&media_package, MEDIA_TYPE_VIDEO) == false) {
+            talk_base::Thread::SleepMs(50);             // wait for 1/20 second
+            continue;
+        }
+        
+        flvPackager->addVideoFrame( media_package->data, 
+                                    media_package->length,
+                                    (media_package->media_type == MEDIA_TYPE_VIDEO_KEYFRAME),
+                                    media_package->ts);
+        int ret = flushBuffer(flvPackager->getBuffer(), flvPackager->bufferLength());
+        if ( ret < 0)
+            break;
+
+        flvPackager->resetBuffer();
+    }
+
+    delete flvPackager;    
 }
