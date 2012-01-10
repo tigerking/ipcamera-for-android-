@@ -15,6 +15,7 @@ public class StreamingServer extends NanoHTTPD
 
     private OnRequestListen myRequestListen = null;
     private File homeDir;
+    private Response streamingResponse = null;
 
     public StreamingServer(int port, String wwwroot) throws IOException {
         super(port, new File( wwwroot ).getAbsoluteFile() );
@@ -33,20 +34,25 @@ public class StreamingServer extends NanoHTTPD
             if ( myRequestListen == null) {
                 return res;
             } else {
+
+
                 InputStream ins;
                 ins = myRequestListen.onRequest();
                 if ( ins == null)
                     return res;
                 
-                Random rnd = new Random();
-				String etag = Integer.toHexString( rnd.nextInt() );
+                if ( streamingResponse == null ) {
+                    Random rnd = new Random();
+                    String etag = Integer.toHexString( rnd.nextInt() );
 
-                res = new Response( HTTP_OK, "video/x-flv", ins);
-                res.addHeader( "Content-Length", "-1");
-                res.addHeader( "Connection", "Keep-alive");
-                res.addHeader( "ETag", etag);
-            
-                Log.d("TEAONLY", "Starting streaming server");
+                    res = new Response( HTTP_OK, "video/x-flv", ins);
+                    res.addHeader( "Content-Length", "-1");
+                    res.addHeader( "Connection", "Keep-alive");
+                    res.addHeader( "ETag", etag);
+        
+                    streamingResponse = res;
+                    Log.d("TEAONLY", "Starting streaming server");
+                }
                 return res;
             }
         } else {
@@ -55,9 +61,10 @@ public class StreamingServer extends NanoHTTPD
     }
 
     public void serveDone( Response r) {
-        if ( r.mimeType.equalsIgnoreCase("video/x-flv") ) {
+        if ( r.mimeType.equalsIgnoreCase("video/x-flv") && r == streamingResponse) {
             if ( myRequestListen != null) {
                 myRequestListen.requestDone();
+                streamingResponse = null;
             }    
         }
     }
