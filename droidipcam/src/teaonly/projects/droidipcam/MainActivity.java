@@ -161,7 +161,7 @@ public class MainActivity extends Activity {
         btnStart.setText( getString(R.string.action_stop) );
         btnStart.setEnabled(true);    
         NetInfoAdapter.Update(this);
-        myMessage.setText( getString(R.string.msg_prepare_ok) + "http://" + NetInfoAdapter.getInfo("IP")  + ":8080" );
+        myMessage.setText( getString(R.string.msg_prepare_ok) + " http://" + NetInfoAdapter.getInfo("IP")  + ":8080" );
 
         try {
             strServer = new StreamingServer(8080, resourceDirectory); 
@@ -218,7 +218,7 @@ public class MainActivity extends Activity {
             myCamView.PrepareMedia();
             boolean ret = myCamView.StartRecording(checkingFile);
             btnStart.setEnabled(false);
-
+            myMessage.setText( getString(R.string.msg_prepare_waiting));
             if ( ret ) {
                 new Handler().postDelayed(new Runnable() { 
                     public void run() { 
@@ -276,7 +276,6 @@ public class MainActivity extends Activity {
             Log.d("TEAONLY", "Request live streaming...");
             if ( startStreaming() == false)
                 return null;
-            Log.d("TEAONLY", "startSteaming() is OK");
             try {
                 InputStream ins = httpLoop.getInputStream(); 
                 return ins;

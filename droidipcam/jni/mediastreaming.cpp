@@ -157,14 +157,18 @@ void MediaStreamer::doCapture() {
         if ( nal_length > 0) {
             if ( (frame_num != 0) && (frame_num != (last_frame_num + 1) ) ) {
                 LOGD("Error, wrong number, FIXME FIXME");
+                {
+                    char temp[512];
+                    snprintf(temp, 512, "%d,  %d, %d, %d, 0x%02x%02x%02x%02x", slice_type, frame_num, nal_length, frame_num_length, 
+                            video_check_pattern[5],video_check_pattern[6],video_check_pattern[7],video_check_pattern[8] );
+                    LOGD(temp);
+                }
+
+                continue;
             }
             last_frame_num = frame_num;
-            {
-                char temp[128];
-                snprintf(temp, 128, "%d,  %d, %d", slice_type, frame_num, nal_length);
-                LOGD(temp);
-            }
-
+            
+                       
             for(int i = 0; i < (int)video_check_pattern.size(); i++) {
                 buf[i] = video_check_pattern[i];
             }
@@ -211,13 +215,13 @@ int MediaStreamer::checkSingleSliceNAL(const std::deque<unsigned char> &pattern 
     // I Frame: b 1011 1***   (first_mb = 0, slice_type = 2, pps_id = 0)   
     // I Frame: b 1000 1000 1 (first_mb = 0, slice_type = 7, pps_id = 0)
     // P Frame: b 111* ****   (first_mb = 0, slice_type = 0, pps_id = 0)
-    // P Frame: b 1001 011*   (first_mb = 0, slice_type = 5, pps_id = 0)
+    // P Frame: b 1001 101*   (first_mb = 0, slice_type = 5, pps_id = 0)
     // 
     int frame_num_skip = -1;
     if ( (pattern[5] & 0xF8 ) == 0xB8) {
         slice_type = 1;
         frame_num_skip = 5;
-    } else if ( ((pattern[5] & 0xFF) == 0x80) 
+    } else if ( ((pattern[5] & 0xFF) == 0x88) 
                 && ((pattern[6] & 0x80) == 0x80) ) {
         slice_type = 1;
         frame_num_skip = 9;
@@ -254,13 +258,6 @@ int MediaStreamer::checkSingleSliceNAL(const std::deque<unsigned char> &pattern 
     }
 
     int nal_length = (pattern[1] << 16)  + (pattern[2] << 8) + pattern[3];
-    /*  
-    {
-        char temp[128];
-        snprintf(temp, 128, "ftype = %d, frame num length = %d, num = %d", slice_type, frame_num_length, frame_num);
-        LOGD(temp);
-    }
-    */
     return nal_length;
 }
 
@@ -315,7 +312,7 @@ void MediaStreamer::doStreaming() {
 
         media_package = NULL;
         if ( mediaBuffer->PullBuffer(&media_package, MEDIA_TYPE_VIDEO) == false) {
-            talk_base::Thread::SleepMs(50);             // wait for 1/20 second
+            talk_base::Thread::SleepMs(20);             // wait for 1/20 second
             continue;
         }
         
