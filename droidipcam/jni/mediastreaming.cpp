@@ -155,7 +155,7 @@ void MediaStreamer::doCapture() {
         unsigned int frame_num;
         int nal_length = checkSingleSliceNAL( video_check_pattern, slice_type, frame_num );
         if ( nal_length > 0) {
-            if ( (frame_num != 0) && (frame_num != (last_frame_num + 1) ) ) {
+            if ( (slice_type == 0) && (frame_num != (last_frame_num + 1) ) ) {
                 LOGD("Error, wrong number, FIXME FIXME");
                 {
                     char temp[512];
@@ -180,7 +180,7 @@ void MediaStreamer::doCapture() {
             fwrite(flvPackager->getBuffer(), flvPackager->bufferLength(), 1, fp);
             flvPackager->resetBuffer();
             */
-            mediaBuffer->PushBuffer( buf, nal_length + 4, frame_count*100, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
+            mediaBuffer->PushBuffer( buf, nal_length + 4, frame_count*88, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
 
             frame_count++;
         }
@@ -194,7 +194,7 @@ int MediaStreamer::checkSingleSliceNAL(const std::deque<unsigned char> &pattern 
     // 1. first we check NAL's size, valid size should less than 192K 
     if ( pattern[0] != 0x00)
         return -1;                          
-    if ( pattern[1] > 2)   
+    if ( pattern[1] != 0x00)   
         return -1;
 
     // 2. check NAL header including NAL start and type,
@@ -313,7 +313,7 @@ void MediaStreamer::doStreaming() {
 
         media_package = NULL;
         if ( mediaBuffer->PullBuffer(&media_package, MEDIA_TYPE_VIDEO) == false) {
-            talk_base::Thread::SleepMs(20);             // wait for 1/20 second
+            talk_base::Thread::SleepMs(50);             // wait for 1/20 second
             continue;
         }
         
