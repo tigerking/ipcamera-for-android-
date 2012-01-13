@@ -159,11 +159,12 @@ void MediaStreamer::doCapture() {
                 LOGD("Error, wrong number, FIXME FIXME");
                 {
                     char temp[512];
-                    snprintf(temp, 512, "%d,  %d, %d, %d, 0x%02x%02x%02x%02x", slice_type, frame_num, nal_length, frame_num_length, 
+                    snprintf(temp, 512, "ST=%d,  FN=%d, NAL=%d, LFN=%d, FNL=%d, 0x%02x%02x%02x%02x", 
+                            slice_type, frame_num, nal_length, last_frame_num, frame_num_length, 
                             video_check_pattern[5],video_check_pattern[6],video_check_pattern[7],video_check_pattern[8] );
                     LOGD(temp);
                 }
-
+                //last_frame_num = frame_num;
                 continue;
             }
             last_frame_num = frame_num;
@@ -179,7 +180,7 @@ void MediaStreamer::doCapture() {
             fwrite(flvPackager->getBuffer(), flvPackager->bufferLength(), 1, fp);
             flvPackager->resetBuffer();
             */
-            mediaBuffer->PushBuffer( buf, nal_length + 4, frame_count*33, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
+            mediaBuffer->PushBuffer( buf, nal_length + 4, frame_count*100, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
 
             frame_count++;
         }
