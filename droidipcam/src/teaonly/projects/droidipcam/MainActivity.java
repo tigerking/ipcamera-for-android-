@@ -197,7 +197,7 @@ public class MainActivity extends Activity {
             return false;
         } 
         
-        btnStart.setEnabled(false);
+        //btnStart.setEnabled(false);
         return true;
     }
 
@@ -210,7 +210,7 @@ public class MainActivity extends Activity {
         cameraLoop.ReleaseLoop();
         
         nativeAgt.NativeStopStreamingMedia();
-        btnStart.setEnabled(true);
+        //btnStart.setEnabled(true);
     }
 
     private void doAction() {
@@ -276,11 +276,13 @@ public class MainActivity extends Activity {
             Log.d("TEAONLY", "Request live streaming...");
             if ( startStreaming() == false)
                 return null;
+            Log.d("TEAONLY", "startSteaming() is OK");
             try {
                 InputStream ins = httpLoop.getInputStream(); 
                 return ins;
             } catch (IOException e) {
                 e.printStackTrace();
+                Log.d("TEAONLY", "call httpLoop.getInputStream() error");
                 stopStreaming();              
             } 
             Log.d("TEAONLY", "Return a null response to request");

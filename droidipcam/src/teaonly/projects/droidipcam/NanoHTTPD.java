@@ -788,6 +788,7 @@ public class NanoHTTPD
 
 				if ( data != null )
 				{
+                    /*
 					int pending = data.available();	// This is to support partial sends, see serveFile()
 					byte[] buff = new byte[2048];
 					while (pending>0)
@@ -796,6 +797,17 @@ public class NanoHTTPD
 						if (read <= 0)	break;
 						out.write( buff, 0, read );
 						pending -= read;
+					}
+                    */
+
+					byte[] buff = new byte[2048];
+                	while (true)
+					{
+						int read = data.read( buff, 0, 2048);
+						if (read < 0)	
+                            break;
+                        if (read > 0)
+                            out.write( buff, 0, read );
 					}
 				}
 				out.flush();

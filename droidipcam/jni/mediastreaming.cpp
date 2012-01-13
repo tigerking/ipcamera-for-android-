@@ -136,6 +136,8 @@ void MediaStreamer::doCapture() {
     flvPackager->resetBuffer();
     */
 
+    LOGD("Native: Begin capture");
+
     unsigned int last_frame_num = 0;
     int frame_count = 0;
     while(1) {
@@ -299,6 +301,8 @@ int MediaStreamer::flushBuffer(unsigned char *buf, unsigned int len) {
 }
 
 void MediaStreamer::doStreaming() {
+
+    LOGD("Native: Begin streaming");
 
     MediaPackage *media_package;
     FlashVideoPackager *flvPackager = new FlashVideoPackager();

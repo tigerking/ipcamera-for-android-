@@ -46,7 +46,6 @@ public class StreamingServer extends NanoHTTPD
                     String etag = Integer.toHexString( rnd.nextInt() );
 
                     res = new Response( HTTP_OK, "video/x-flv", ins);
-                    res.addHeader( "Content-Length", "-1");
                     res.addHeader( "Connection", "Keep-alive");
                     res.addHeader( "ETag", etag);
         
