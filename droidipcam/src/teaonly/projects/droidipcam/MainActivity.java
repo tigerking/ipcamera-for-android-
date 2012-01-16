@@ -157,6 +157,7 @@ public class MainActivity extends Activity {
 
         Button btnTest = (Button)findViewById(R.id.btn_test);
         btnTest.setOnClickListener(testAction);
+        btnTest.setVisibility(View.INVISIBLE);
 
         RadioButton rb = (RadioButton)findViewById(R.id.res_low);
         rb.setOnClickListener(low_res_listener);

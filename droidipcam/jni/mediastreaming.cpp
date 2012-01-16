@@ -20,6 +20,7 @@ protected:
     virtual void OnMessage(talk_base::Message *msg);
 
     void doCapture();
+    void doCapture2();
     int checkSingleSliceNAL(const std::deque<unsigned char> &pattern , int &slice_type, unsigned int &frame_num);
     int fillBuffer(unsigned char *buf, unsigned int len);
     int flushBuffer(unsigned char *buf, unsigned int len);
@@ -53,6 +54,7 @@ int StartStreamingMedia(int infd, int outfd) {
     MediaStreamer::mediaBuffer->Reset(); 
 
     if ( MediaStreamer::mediaStreamer != NULL) {
+        LOGD("Before delete mediaStreamer");
         delete MediaStreamer::mediaStreamer;
     }
     MediaStreamer::mediaStreamer = new MediaStreamer(infd, outfd);
@@ -121,7 +123,7 @@ void MediaStreamer::OnMessage(talk_base::Message *msg) {
     }
 }
 
-void MediaStreamer::doCapture() {
+void MediaStreamer::doCapture2() {
     std::deque<unsigned char> video_check_pattern;
     video_check_pattern.resize(9, 0x00);
     
@@ -188,6 +190,71 @@ void MediaStreamer::doCapture() {
     delete buf;
 
 }
+
+void MediaStreamer::doCapture() {
+    unsigned char *buf;
+    buf = new unsigned char[MAX_VIDEO_PACKAGE];
+    unsigned int aseq = 0;
+    unsigned int vseq = 0;
+
+    // skip none useable heaer bytes
+    fillBuffer( buf, mediaInfo.begin_skip);
+
+    // fectching real time video data from camera
+    while(1) {
+        if ( fillBuffer(buf, 4) < 0)
+            break;
+
+checking_buffer:        
+        if ( buf[0] == 0x00  ) {
+            unsigned int vpkg_len = (buf[1] << 16) + (buf[2] << 8) + buf[3];
+            if ( fillBuffer(&buf[4], vpkg_len ) < 0)
+              break;
+            vpkg_len += 4;
+            
+            if ( vpkg_len > (unsigned int)MAX_VIDEO_PACKAGE )
+              LOGD("ERROR: Big video frame....");
+
+            int slice_type = 0;
+            if ( (buf[5] & 0xF8 ) == 0xB8) {
+                slice_type = 1;
+            } else if ( ((buf[5] & 0xFF) == 0x88) 
+                    && ((buf[5] & 0x80) == 0x80) ) {
+                slice_type = 1;
+            } else if ( (buf[5] & 0xE0) == 0xE0) {
+                slice_type = 0;
+            } else if ( (buf[5] & 0xFE) == 0x9A) {
+                slice_type = 0;
+            }
+            buf[0] = 0x00;
+            buf[1] = 0x00;
+            buf[2] = 0x00;
+            buf[3] = 0x01; 
+            
+            vseq ++;
+            mediaBuffer->PushBuffer( buf, vpkg_len, vseq*88, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
+        } else {
+            // fetching AMR_NB audio package
+            static const unsigned char packed_size[16] = {12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0};
+            unsigned int mode = (buf[0]>>3) & 0x0F;
+            unsigned int size = packed_size[mode] + 1;
+            if ( size > 4) {
+                if ( fillBuffer(&buf[4], size - 4) < 0)
+                    break;
+                aseq ++;
+                //SignalNewPackage(buf, 32, ats, MEDIA_TYPE_AUDIO);
+            } else {
+                fillBuffer(&buf[4], size );
+                for(int i = 0; i < 4; i++) 
+                    buf[i] = buf[size+i];
+                //SignalNewPackage(buf, 32, ats, MEDIA_TYPE_AUDIO);
+                goto checking_buffer;
+            }
+        }
+    }
+    delete buf;
+}
+
 
 int MediaStreamer::checkSingleSliceNAL(const std::deque<unsigned char> &pattern , int &slice_type, unsigned int &frame_num) {   
     

@@ -24,6 +24,11 @@ public class StreamingLoop
 	public StreamingLoop (String addr)	
 	{
 		localAddress = addr;
+        try {
+			lss = new LocalServerSocket(localAddress);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}		
 	}
 	
 	public FileDescriptor getSenderFileDescriptor()
@@ -47,9 +52,6 @@ public class StreamingLoop
 	public void ReleaseLoop()
 	{
 		try {
-			if ( lss != null){
-				lss.close();
-			}
 			if ( receiver != null){
 				receiver.close();
 			}
@@ -61,7 +63,6 @@ public class StreamingLoop
 			Log.d("MVRS", e1.toString());			
 		}
 		
-		lss = null;
 		sender = null;
 		receiver = null;
 	}
@@ -70,7 +71,6 @@ public class StreamingLoop
 	{		
         receiver = new LocalSocket();
 		try {
-			lss = new LocalServerSocket(localAddress);
 			receiver.connect(new LocalSocketAddress(localAddress));
 			receiver.setReceiveBufferSize(1000);
 			receiver.setSendBufferSize(1000);
