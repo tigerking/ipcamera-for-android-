@@ -48,7 +48,7 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
         setOnTouchListener(this);
     }
     
-    public void PrepareMedia() {
+    public void PrepareMedia(int wid, int hei) {
         myMediaRecorder =  new MediaRecorder();
         myCamera.stopPreview();
         myCamera.unlock();
@@ -59,11 +59,11 @@ public class CameraView extends View implements SurfaceHolder.Callback, View.OnT
 	    
         CamcorderProfile targetProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
         targetProfile.quality = 60;
-        targetProfile.videoBitRate = 512000;
-        targetProfile.videoFrameWidth = 640;
-        targetProfile.videoFrameHeight = 480;
+        targetProfile.videoFrameWidth = wid;
+        targetProfile.videoFrameHeight = hei;
         targetProfile.videoFrameRate = 30;
         targetProfile.videoCodec = MediaRecorder.VideoEncoder.H264;
+        targetProfile.audioCodec = MediaRecorder.AudioEncoder.AMR_NB;
         targetProfile.fileFormat = MediaRecorder.OutputFormat.MPEG_4;
         myMediaRecorder.setProfile(targetProfile);
     }

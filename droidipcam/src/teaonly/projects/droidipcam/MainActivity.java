@@ -19,6 +19,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -33,8 +35,12 @@ public class MainActivity extends Activity {
     
     TextView myMessage;
     Button btnStart;
+    RadioGroup resRadios;
+
     boolean inServer = false;
     boolean inStreaming = false;
+    int targetWid = 320;
+    int targetHei = 240;
 
     final String checkingFile = "/sdcard/ipcam/myvideo.mp4";
     final String resourceDirectory = "/sdcard/ipcam";
@@ -152,6 +158,15 @@ public class MainActivity extends Activity {
         Button btnTest = (Button)findViewById(R.id.btn_test);
         btnTest.setOnClickListener(testAction);
 
+        RadioButton rb = (RadioButton)findViewById(R.id.res_low);
+        rb.setOnClickListener(low_res_listener);
+        rb = (RadioButton)findViewById(R.id.res_medium);
+        rb.setOnClickListener(medium_res_listener);
+        rb = (RadioButton)findViewById(R.id.res_high);
+        rb.setOnClickListener(high_res_listener);
+
+        resRadios = (RadioGroup)findViewById(R.id.resolution);
+
         View  v = (View)findViewById(R.id.layout_setup);
         v.setVisibility(View.VISIBLE);
     }
@@ -191,7 +206,7 @@ public class MainActivity extends Activity {
         httpLoop.InitLoop();
         nativeAgt.NativeStartStreamingMedia(cameraLoop.getReceiverFileDescriptor() , httpLoop.getSenderFileDescriptor());
 
-        myCamView.PrepareMedia();
+        myCamView.PrepareMedia(targetWid, targetHei);
         boolean ret = myCamView.StartStreaming(cameraLoop.getSenderFileDescriptor());
         if ( ret == false) {
             return false;
@@ -215,25 +230,26 @@ public class MainActivity extends Activity {
 
     private void doAction() {
          if ( inServer == false) {
-            myCamView.PrepareMedia();
+            myCamView.PrepareMedia(targetWid, targetHei);
             boolean ret = myCamView.StartRecording(checkingFile);
-            btnStart.setEnabled(false);
-            myMessage.setText( getString(R.string.msg_prepare_waiting));
-            if ( ret ) {
-                new Handler().postDelayed(new Runnable() { 
+           if ( ret ) {
+               btnStart.setEnabled(false);
+               resRadios.setEnabled(false);
+               myMessage.setText( getString(R.string.msg_prepare_waiting));
+               new Handler().postDelayed(new Runnable() { 
                     public void run() { 
                         myCamView.StopMedia();
                         if ( NativeAgent.NativeCheckMedia(checkingFile) ) {
                             startServer();    
                         } else {
                             btnStart.setEnabled(true);
-                            showToast(MainActivity.this, getString(R.string.msg_prepare_error));
+                            resRadios.setEnabled(false);
+                            showToast(MainActivity.this, getString(R.string.msg_prepare_error2));
                         }
                     } 
                 }, 2000); // 2 seconds to release 
             } else {
-                btnStart.setEnabled(true);
-                showToast(this, getString(R.string.msg_prepare_error));
+                showToast(this, getString(R.string.msg_prepare_error1));
             }
         } else {
             stopServer();
@@ -308,5 +324,26 @@ public class MainActivity extends Activity {
             startStreaming();
         }
     };
-
+    
+    private OnClickListener low_res_listener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            targetWid = 320;
+            targetHei = 240;
+        }
+    };
+    private OnClickListener medium_res_listener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            targetWid = 640;
+            targetHei = 480;
+        }
+    };
+    private OnClickListener high_res_listener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            targetWid = 1280;
+            targetHei = 720;
+        }
+    };
 }
