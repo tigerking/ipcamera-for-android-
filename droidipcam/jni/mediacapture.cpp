@@ -1,6 +1,8 @@
+#include <sys/time.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <list>
 #include <deque>
 #include "ipcamera.h"
 #include "mediastreamer.h"
@@ -76,13 +78,23 @@ void MediaStreamer::doCapture2() {
 
 }
 
+unsigned long static getCurrentTime() {
+    struct timeval tv;  
+    gettimeofday (&tv, NULL);
+    
+    return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
 // this method only support H.264 + AMR_NB
 void MediaStreamer::doCapture() {
     unsigned char *buf;
     buf = new unsigned char[MAX_VIDEO_PACKAGE];
     unsigned int aseq = 0;
-    unsigned int vseq = 0;
-
+   
+    const unsigned int STACK_SIZE = 1000;
+    std::list<unsigned long> timestack;
+    unsigned long last_ts = 0;
+    
     // skip none useable heaer bytes
     fillBuffer( buf, mediaInfo.begin_skip);
 
@@ -98,8 +110,11 @@ checking_buffer:
               break;
             vpkg_len += 4;
             
-            if ( vpkg_len > (unsigned int)MAX_VIDEO_PACKAGE )
-              LOGD("ERROR: Big video frame....");
+            if ( vpkg_len > (unsigned int)MAX_VIDEO_PACKAGE ) {
+              LOGD("ERROR: Drop big video frame....");
+              fillBuffer(vpkg_len);
+              continue; 
+            }
 
             int slice_type = 0;
             if ( (buf[5] & 0xF8 ) == 0xB8) {
@@ -116,9 +131,25 @@ checking_buffer:
             buf[1] = 0x00;
             buf[2] = 0x00;
             buf[3] = 0x01; 
-            
-            vseq ++;
-            mediaBuffer->PushBuffer( buf, vpkg_len, vseq*88, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
+           
+            // computing the current package's timestamp 
+            long cts = getCurrentTime();
+            if( timestack.size() >= STACK_SIZE) {
+                timestack.pop_back();
+                timestack.push_front(cts);
+            } else {
+                timestack.push_front(cts);
+            }
+            if ( timestack.size() < STACK_SIZE) {
+                cts = (timestack.size() - 1) * 40;      // default = 25 fps
+                last_ts = cts;
+            } else {
+                unsigned long total_ms;
+                total_ms = timestack.front() - timestack.back();
+                cts = last_ts + total_ms / (STACK_SIZE - 1);
+            }
+
+            mediaBuffer->PushBuffer( buf, vpkg_len, cts, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
         } else {
             // fetching AMR_NB audio package
             static const unsigned char packed_size[16] = {12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0};
@@ -229,6 +260,28 @@ int MediaStreamer::fillBuffer(unsigned char *buf, unsigned int len) {
 
     len -= ret;
     buf += ret;
+  }
+  return len;
+}
+
+int MediaStreamer::fillBuffer(unsigned int len) {
+  unsigned char temp[1024];
+  int ret;
+  while(len > 0) {
+    if ( len > 1024)
+        ret = recv(infd, temp, 1024, 0);
+    else
+        ret = recv(infd, temp, len, 0);
+    
+    if ( ret < 0)
+        return -1;
+    if ( ret == 0)
+        continue;
+    
+    if ( infd < 0)
+        return -1;
+
+    len -= ret;
   }
   return len;
 }

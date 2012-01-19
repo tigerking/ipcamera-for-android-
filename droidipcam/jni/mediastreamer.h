@@ -24,6 +24,7 @@ protected:
     void doCapture2();
     int checkSingleSliceNAL(const std::deque<unsigned char> &pattern , int &slice_type, unsigned int &frame_num);
     int fillBuffer(unsigned char *buf, unsigned int len);
+    int fillBuffer(unsigned int len);
     int flushBuffer(unsigned char *buf, unsigned int len);
     
     void doStreaming();
