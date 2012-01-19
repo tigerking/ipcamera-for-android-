@@ -72,7 +72,7 @@ bool MediaBuffer::pushVideoPackage(const unsigned char *d, const unsigned int le
   }
 
   if ( vpkg_pool_.size() == 0) {
-    LOGD("Media Buffer Overflow!"); 
+    //LOGD("Media Buffer Overflow!"); 
     return false; 
   }
 
