@@ -22,7 +22,7 @@ public:
 };
 
 extern MediaCheckInfo mediaInfo;
-int CheckMedia(const std::string mp4_file);
+int CheckMedia(const int wid, const int hei, const std::string mp4_file);
 
 int StartStreamingMedia(int infd, int outfd);
 void StopStreamingMedia();

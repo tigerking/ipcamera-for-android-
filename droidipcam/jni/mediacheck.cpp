@@ -41,9 +41,9 @@ void getHeader(FILE *fp) {
     }
 }
     
-int CheckMedia(const std::string mp4_file) {
-    mediaInfo.video_width = 640;
-    mediaInfo.video_height = 480;
+int CheckMedia(const int wid, const int hei, const std::string mp4_file) {
+    mediaInfo.video_width = wid;
+    mediaInfo.video_height = hei;
     mediaInfo.audio_codec = -1;
 
     std::deque<unsigned char> mdat;

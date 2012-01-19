@@ -3,7 +3,7 @@
 #define  JNIDEFINE(fname) Java_teaonly_projects_droidipcam_NativeAgent_##fname
 
 extern "C" {
-    JNIEXPORT jint JNICALL JNIDEFINE(nativeCheckMedia)(JNIEnv* env, jclass clz, jstring file_path);
+    JNIEXPORT jint JNICALL JNIDEFINE(nativeCheckMedia)(JNIEnv* env, jclass clz, jint wid, jint hei, jstring file_path);
     JNIEXPORT jint JNICALL JNIDEFINE(nativeStartStreamingMedia)(JNIEnv* env, jclass clz, jobject infdesc, jobject outfdesc);
     JNIEXPORT void JNICALL JNIDEFINE(nativeStopStreamingMedia)(JNIEnv* env, jclass clz);
 };
@@ -19,9 +19,9 @@ static std::string convert_jstring(JNIEnv *env, const jstring &js) {
     return str;
 }
 
-JNIEXPORT jint JNICALL JNIDEFINE(nativeCheckMedia)(JNIEnv* env, jclass clz, jstring file_path) {
+JNIEXPORT jint JNICALL JNIDEFINE(nativeCheckMedia)(JNIEnv* env, jclass clz, jint wid, jint hei, jstring file_path) {
     std::string mp4_file = convert_jstring(env, file_path);
-    int ret = CheckMedia(mp4_file);
+    int ret = CheckMedia(wid, hei, mp4_file);
 
     return ret;
 }

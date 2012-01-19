@@ -31,7 +31,7 @@ void MediaStreamer::doStreaming() {
 
     MediaPackage *media_package;
     FlashVideoPackager *flvPackager = new FlashVideoPackager();
-    flvPackager->setParameter(640, 480, 30);
+    flvPackager->setParameter(mediaInfo.video_width, mediaInfo.video_height, 30);
     flvPackager->addVideoHeader(&mediaInfo.sps_data[0], mediaInfo.sps_data.size(), &mediaInfo.pps_data[0], mediaInfo.pps_data.size());
  
     while(1) {
