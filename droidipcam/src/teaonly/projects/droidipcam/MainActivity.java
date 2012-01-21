@@ -240,7 +240,7 @@ public class MainActivity extends Activity {
                new Handler().postDelayed(new Runnable() { 
                     public void run() { 
                         myCamView.StopMedia();
-                        if ( NativeAgent.NativeCheckMedia(checkingFile) ) {
+                        if ( NativeAgent.NativeCheckMedia(targetWid, targetHei, checkingFile) ) {
                             startServer();    
                         } else {
                             btnStart.setEnabled(true);
