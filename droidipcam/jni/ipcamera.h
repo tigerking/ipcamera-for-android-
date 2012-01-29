@@ -15,6 +15,7 @@ const int MAX_VIDEO_PACKAGE = 384*1024;
 struct MediaCheckInfo {
 public:    
     int video_width, video_height;
+    int video_frame_rate;
     int audio_codec;
     int begin_skip;
     std::vector<unsigned char> sps_data;

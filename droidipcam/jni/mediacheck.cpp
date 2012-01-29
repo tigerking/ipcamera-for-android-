@@ -28,7 +28,9 @@ MediaCheckInfo mediaInfo;
 
 void getHeader(FILE *fp) {
     unsigned char temp_buffer[1024];
-    fread(temp_buffer, 1, 1024, fp);    
+    long current_pos = ftell(fp);
+    fread(temp_buffer, 1, 1024, fp);
+    fseek(fp, current_pos, SEEK_SET);    
 
     int sps_size = (temp_buffer[5] << 8) + temp_buffer[6];
     for(int i = 0; i < sps_size; i++) {
@@ -40,18 +42,57 @@ void getHeader(FILE *fp) {
         mediaInfo.pps_data.push_back( temp_buffer[10 + sps_size + i] );
     }
 }
-    
+
+/*
+713     if( p_box->data.p_mdhd->i_version )
+714     {
+715         MP4_GET8BYTES( p_box->data.p_mdhd->i_creation_time );
+716         MP4_GET8BYTES( p_box->data.p_mdhd->i_modification_time );
+717         MP4_GET4BYTES( p_box->data.p_mdhd->i_timescale );
+718         MP4_GET8BYTES( p_box->data.p_mdhd->i_duration );
+719     }
+720     else
+721     {
+722         MP4_GET4BYTES( p_box->data.p_mdhd->i_creation_time );
+723         MP4_GET4BYTES( p_box->data.p_mdhd->i_modification_time );
+724         MP4_GET4BYTES( p_box->data.p_mdhd->i_timescale );
+725         MP4_GET4BYTES( p_box->data.p_mdhd->i_duration );
+726     }
+*/
+unsigned int getTimeScale(FILE *fp, unsigned char version) {
+    unsigned char temp_buffer[1024];
+    unsigned int ret;
+    if ( version ) {
+        fread(temp_buffer, 1, 3 + 8 + 8 + 4, fp);
+        ret = temp_buffer[22] +
+            (temp_buffer[21] << 8) +
+            (temp_buffer[20] << 16) +
+            (temp_buffer[19] << 24);
+    } else {
+        fread(temp_buffer, 1, 3 + 4 + 4 + 4, fp);
+        ret = temp_buffer[14] +
+            (temp_buffer[13] << 8) +
+            (temp_buffer[12] << 16) +
+            (temp_buffer[11] << 24);
+    } 
+
+    return ret;
+}
+
 int CheckMedia(const int wid, const int hei, const std::string mp4_file) {
     mediaInfo.video_width = wid;
     mediaInfo.video_height = hei;
     mediaInfo.audio_codec = -1;
+    mediaInfo.video_frame_rate = -1;
 
     std::deque<unsigned char> mdat;
     std::deque<unsigned char> avcC;
+    std::deque<unsigned char> stts;
 
     for(int i = 0; i < 4; i++) {
         mdat.push_back(0);
         avcC.push_back(0);
+        stts.push_back(0);
     }
     avcC.push_back(0);
 
@@ -81,8 +122,11 @@ int CheckMedia(const int wid, const int hei, const std::string mp4_file) {
 
     mediaInfo.sps_data.clear();
     mediaInfo.pps_data.clear();
+    fseek(fp, 0l, SEEK_SET);
+    unsigned int time_scale = 0;
+    bool avcFind = false;
 
-    // 1. get pps and sps data
+    // 1. get sps&pps and time scale
     while( !feof(fp) ) {
         c = fgetc(fp);
         avcC.push_back(c);
@@ -92,13 +136,23 @@ int CheckMedia(const int wid, const int hei, const std::string mp4_file) {
                 && avcC[2] == 'c'
                 && avcC[3] == 'C'
                 && avcC[4] == 0x01) {
-            std::cout << "Found sps and pps data" << std::endl;
+            avcFind = true;
             getHeader(fp);
-            return 1;
+            break;
+        } else if (avcC[0] == 'm'
+                && avcC[1] == 'd'
+                && avcC[2] == 'h'
+                && avcC[3] == 'd') {
+            time_scale = getTimeScale(fp, avcC[4]);
         }
     }  
 
-    return 0;
+    if ( !avcFind ) {
+        return 0;
+    }
+
+
+    return 1;
 }
 
 #if 0
