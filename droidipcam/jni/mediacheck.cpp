@@ -62,8 +62,10 @@ void getHeader(FILE *fp) {
 unsigned int getTimeScale(FILE *fp, unsigned char version) {
     unsigned char temp_buffer[1024];
     unsigned int ret;
+    
     if ( version ) {
         fread(temp_buffer, 1, 3 + 8 + 8 + 4, fp);
+    
         ret = temp_buffer[22] +
             (temp_buffer[21] << 8) +
             (temp_buffer[20] << 16) +
@@ -77,6 +79,34 @@ unsigned int getTimeScale(FILE *fp, unsigned char version) {
     } 
 
     return ret;
+}
+/*
+MP4_GETVERSIONFLAGS( p_box->data.p_stts );
+MP4_GET4BYTES( p_box->data.p_stts->i_entry_count );
+MP4_GET4BYTES( p_box->data.p_stts->i_sample_count[i] );
+MP4_GET4BYTES( p_box->data.p_stts->i_sample_delta[i] );
+*/
+unsigned int getFrameRate(FILE *fp, unsigned int time_scale) {
+    unsigned char temp_buffer[1024];
+    fread(temp_buffer, 1, 1024, fp);
+    
+    unsigned int entry_count = temp_buffer[7] +
+                              (temp_buffer[6] << 8) +
+                              (temp_buffer[5] << 16) +
+                              (temp_buffer[4] << 24);
+
+    if ( entry_count > 0) {
+        unsigned int duration = temp_buffer[15] +
+                              (temp_buffer[14] << 8) +
+                              (temp_buffer[13] << 16) +
+                              (temp_buffer[12] << 24);
+        
+        std::cout << "duration = " << duration << std::endl;
+        mediaInfo.video_frame_rate = (int)( time_scale * 1.0 / duration + 0.5);
+        return duration;
+    }
+    
+    return 0;
 }
 
 int CheckMedia(const int wid, const int hei, const std::string mp4_file) {
@@ -124,6 +154,7 @@ int CheckMedia(const int wid, const int hei, const std::string mp4_file) {
     mediaInfo.pps_data.clear();
     fseek(fp, 0l, SEEK_SET);
     unsigned int time_scale = 0;
+    unsigned int frame_duration = 0;
     bool avcFind = false;
 
     // 1. get sps&pps and time scale
@@ -150,15 +181,45 @@ int CheckMedia(const int wid, const int hei, const std::string mp4_file) {
     if ( !avcFind ) {
         return 0;
     }
+    
+    std::cout << "time_scale = " << time_scale << std::endl;
+    
+    // 2. trying to find the stss atom 
+    while( !feof(fp) ) {
+        c = fgetc(fp);
+        stts.push_back(c);
+        stts.pop_front();
+        if ( stts[0] == 's' &&
+             stts[1] == 't' && 
+             stts[2] == 't' && 
+             stts[3] == 's') {
+            frame_duration = getFrameRate(fp, time_scale);
+            break;
+        }
 
+    }    
+
+    std::cout << "frame rate = " << mediaInfo.video_frame_rate << std::endl;
+
+    {
+        char temp[512];
+        sprintf(temp, "skip = %d, time_scale = %d, duration = %d, frame_rate = %d\n", 
+                        mediaInfo.begin_skip, 
+                        time_scale,
+                        frame_duration, 
+                        mediaInfo.video_frame_rate);
+        LOGD(temp);
+    }
 
     return 1;
 }
 
 #if 0
 int main(int argc, const char *argv[]) {
-    if ( argc > 1)
-        CheckMedia(argv[1]);
+    if ( argc > 1) {
+        std::string fname = argv[1];
+        CheckMedia(0, 0, fname);
+    }
 }
 #endif
 

@@ -78,7 +78,7 @@ void MediaStreamer::doCapture2() {
 
 }
 
-unsigned long static getCurrentTime() {
+static unsigned long getCurrentTime() {
     struct timeval tv;  
     gettimeofday (&tv, NULL);
     
@@ -90,11 +90,12 @@ void MediaStreamer::doCapture() {
     unsigned char *buf;
     buf = new unsigned char[MAX_VIDEO_PACKAGE];
     unsigned int aseq = 0;
+    unsigned int vseq = 0;
    
     const unsigned int STACK_SIZE = 1000;
     std::list<unsigned long> timestack;
     unsigned long last_ts = 0;
-    
+
     // skip none useable heaer bytes
     fillBuffer( buf, mediaInfo.begin_skip);
 
@@ -112,6 +113,7 @@ checking_buffer:
             
             if ( vpkg_len > (unsigned int)MAX_VIDEO_PACKAGE ) {
               LOGD("ERROR: Drop big video frame....");
+              vseq++;
               fillBuffer(vpkg_len);
               continue; 
             }
@@ -132,6 +134,7 @@ checking_buffer:
             buf[2] = 0x00;
             buf[3] = 0x01; 
            
+#if 1        
             // computing the current package's timestamp 
             long cts = getCurrentTime();
             if( timestack.size() >= STACK_SIZE) {
@@ -148,8 +151,11 @@ checking_buffer:
                 total_ms = timestack.front() - timestack.back();
                 cts = last_ts + total_ms / (STACK_SIZE - 1);
             }
-
             mediaBuffer->PushBuffer( buf, vpkg_len, cts, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
+#else
+            vseq ++;
+            mediaBuffer->PushBuffer( buf, vpkg_len, vseq * 1000 / mediaInfo.video_frame_rate, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
+#endif
         } else {
             // fetching AMR_NB audio package
             static const unsigned char packed_size[16] = {12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0};

@@ -17,6 +17,7 @@ public class NativeAgent {
     
     static private native int nativeCheckMedia(int wid, int hei, String fileName);
     static public boolean NativeCheckMedia(int wid, int hei, String filename) {
+        Log.d("TEAONLY", "Call native function: checkmedia");
         if (nativeCheckMedia(wid, hei, filename) > 0)
             return true;
         else
