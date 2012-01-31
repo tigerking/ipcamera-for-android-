@@ -214,7 +214,14 @@ public class MainActivity extends Activity {
             return false;
         } 
         
-        //btnStart.setEnabled(false);
+        
+        new Handler().post(new Runnable() { 
+            public void run() { 
+                showToast(MainActivity.this, getString(R.string.msg_streaming));
+                btnStart.setEnabled(false);
+            } 
+        });
+
         return true;
     }
 
@@ -227,7 +234,12 @@ public class MainActivity extends Activity {
         cameraLoop.ReleaseLoop();
         
         nativeAgt.NativeStopStreamingMedia();
-        //btnStart.setEnabled(true);
+
+        new Handler().post(new Runnable() { 
+            public void run() { 
+                btnStart.setEnabled(true);
+            } 
+        });
     }
 
     private void doAction() {

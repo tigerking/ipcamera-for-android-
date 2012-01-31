@@ -10,9 +10,10 @@
     <string name="res_high">1280x720</string>
 
     <string name="msg_idle">Select video size, press Start to begin</string> 
+    <string name="msg_start_error">Can not start http server..</string>
     <string name="msg_prepare_waiting">Checking camera ..</string>
     <string name="msg_prepare_ok">Camera is OK. Using player access: </string>
     <string name="msg_prepare_error1">Your phone do not support MP4+AMR_BN format, please exit by menu.</string>
     <string name="msg_prepare_error2">Prepareing is error, please try again.</string>
-
+    <string name="msg_streaming">Do streaming...</string>
 </resources>
