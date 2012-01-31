@@ -48,7 +48,7 @@ public class StreamingServer extends NanoHTTPD
                     res = new Response( HTTP_OK, "video/x-flv", ins);
                     res.addHeader( "Connection", "Keep-alive");
                     res.addHeader( "ETag", etag);
-        
+                    res.isStreaming = true; 
                     streamingResponse = res;
                     Log.d("TEAONLY", "Starting streaming server");
                 }

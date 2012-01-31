@@ -192,6 +192,11 @@ public class NanoHTTPD
 		 * to add lines.
 		 */
 		public Properties header = new Properties();
+
+        /**
+         * Is streaming mode
+         */
+        public boolean isStreaming = false;
 	}
 
 	/**
@@ -443,8 +448,8 @@ public class NanoHTTPD
 				Response r = serve( uri, method, header, parms, files );
 				if ( r == null )
 					sendError( HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: Serve() returned a null response." );
-				else
-					sendResponse( r.status, r.mimeType, r.header, r.data );
+				else 
+                    sendResponse( r.status, r.mimeType, r.header, r.data, r.isStreaming );
 
 				in.close();
 				is.close();
@@ -748,14 +753,14 @@ public class NanoHTTPD
 		 */
 		private void sendError( String status, String msg ) throws InterruptedException
 		{
-			sendResponse( status, MIME_PLAINTEXT, null, new ByteArrayInputStream( msg.getBytes()));
+			sendResponse( status, MIME_PLAINTEXT, null, new ByteArrayInputStream( msg.getBytes()), false);
 			throw new InterruptedException();
 		}
 
 		/**
 		 * Sends given response to the socket.
 		 */
-		private void sendResponse( String status, String mime, Properties header, InputStream data )
+		private void sendResponse( String status, String mime, Properties header, InputStream data , boolean isStreaming)
 		{
 			try
 			{
@@ -788,30 +793,30 @@ public class NanoHTTPD
 
 				if ( data != null )
 				{
-                    /*
-					int pending = data.available();	// This is to support partial sends, see serveFile()
-					byte[] buff = new byte[2048];
-					while (pending>0)
-					{
-						int read = data.read( buff, 0, ( (pending>2048) ?  2048 : pending ));
-						if (read <= 0)	break;
-						out.write( buff, 0, read );
-						pending -= read;
-					}
-                    */
-
-					byte[] buff = new byte[2048];
-                	while (true)
-					{
-						int read = data.read( buff, 0, 2048);
-						if (read < 0)	
-                            break;
-                        if (read > 0)
+                    if ( isStreaming == false) {
+                        int pending = data.available();	// This is to support partial sends, see serveFile()
+                        byte[] buff = new byte[2048];
+                        while (pending>0)
+                        {
+                            int read = data.read( buff, 0, ( (pending>2048) ?  2048 : pending ));
+                            if (read <= 0)	break;
                             out.write( buff, 0, read );
-					}
-				}
-				out.flush();
-				out.close();
+                            pending -= read;
+                        }
+                    } else {
+                        byte[] buff = new byte[2048];
+                        while (true)
+                        {
+                            int read = data.read( buff, 0, 2048);
+                            if (read < 0)	
+                                break;
+                            if (read > 0)
+                                out.write( buff, 0, read );
+                        }
+                    }
+                }
+                out.flush();
+                out.close();
 				if ( data != null )
 					data.close();
 			}
