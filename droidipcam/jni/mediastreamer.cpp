@@ -57,8 +57,8 @@ void MediaStreamer::Start() {
 }
 
 void MediaStreamer::Stop() {
-    infd =1;
-    outfd =1;
+    infd = -1;
+    outfd = -1;
 
     if ( streamingThread != NULL)
         streamingThread->Quit();

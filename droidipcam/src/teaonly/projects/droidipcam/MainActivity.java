@@ -336,7 +336,7 @@ public class MainActivity extends Activity {
     private OnClickListener testAction = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            startStreaming();
+            // do some debug testing here.
         }
     };
     
