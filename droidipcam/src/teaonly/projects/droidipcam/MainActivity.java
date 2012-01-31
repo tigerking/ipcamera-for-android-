@@ -126,10 +126,11 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
             } 
         
-            //copyResourceFile(R.raw.index, resourceDir + "index.html"  );
-            //copyResourceFile(R.raw.player, resourceDirectory + "/player.swf"  );
-            //copyResourceFile(R.raw.jwplayer, resourceDirectory + "/jwplayer.js"  );
-            //copyResourceFile(R.raw.swfobject, resourceDirectory + "/swfobject.js"  ); 
+            copyResourceFile(R.raw.index, resourceDirectory + "index.html"  );
+            copyResourceFile(R.raw.style, resourceDirectory + "style.css"  );
+            copyResourceFile(R.raw.player, resourceDirectory + "player.js"  );
+            copyResourceFile(R.raw.player_object, resourceDirectory + "player_object.swf"  );
+            copyResourceFile(R.raw.player_controler, resourceDirectory + "player_controler.swf"  ); 
         }
         catch (IOException e) {
             e.printStackTrace();
