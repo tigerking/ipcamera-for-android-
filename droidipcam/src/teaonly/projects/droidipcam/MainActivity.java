@@ -126,11 +126,11 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
             } 
         
-            copyResourceFile(R.raw.index, resourceDirectory + "index.html"  );
-            copyResourceFile(R.raw.style, resourceDirectory + "style.css"  );
-            copyResourceFile(R.raw.player, resourceDirectory + "player.js"  );
-            copyResourceFile(R.raw.player_object, resourceDirectory + "player_object.swf"  );
-            copyResourceFile(R.raw.player_controler, resourceDirectory + "player_controler.swf"  ); 
+            copyResourceFile(R.raw.index, resourceDirectory + "/index.html"  );
+            copyResourceFile(R.raw.style, resourceDirectory + "/style.css"  );
+            copyResourceFile(R.raw.player, resourceDirectory + "/player.js"  );
+            copyResourceFile(R.raw.player_object, resourceDirectory + "/player_object.swf"  );
+            copyResourceFile(R.raw.player_controler, resourceDirectory + "/player_controler.swf"  ); 
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -214,14 +214,14 @@ public class MainActivity extends Activity {
             return false;
         } 
         
-        
+       	/* 
         new Handler().post(new Runnable() { 
             public void run() { 
                 showToast(MainActivity.this, getString(R.string.msg_streaming));
                 btnStart.setEnabled(false);
             } 
         });
-
+		*/
         return true;
     }
 
@@ -234,12 +234,13 @@ public class MainActivity extends Activity {
         cameraLoop.ReleaseLoop();
         
         nativeAgt.NativeStopStreamingMedia();
-
+		/*
         new Handler().post(new Runnable() { 
             public void run() { 
                 btnStart.setEnabled(true);
             } 
         });
+		*/
     }
 
     private void doAction() {
