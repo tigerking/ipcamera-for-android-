@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper; 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -214,33 +215,32 @@ public class MainActivity extends Activity {
             return false;
         } 
         
-       	/* 
-        new Handler().post(new Runnable() { 
+        new Handler(Looper.getMainLooper()).post(new Runnable() { 
             public void run() { 
                 showToast(MainActivity.this, getString(R.string.msg_streaming));
                 btnStart.setEnabled(false);
             } 
         });
-		*/
+
+        inStreaming = true;
         return true;
     }
 
     private void stopStreaming() {
         if ( inStreaming == false)
             return;
+        inStreaming = false;
 
         myCamView.StopMedia(); 
         httpLoop.ReleaseLoop();
         cameraLoop.ReleaseLoop();
         
         nativeAgt.NativeStopStreamingMedia();
-		/*
-        new Handler().post(new Runnable() { 
+        new Handler(Looper.getMainLooper()).post(new Runnable() { 
             public void run() { 
                 btnStart.setEnabled(true);
             } 
         });
-		*/
     }
 
     private void doAction() {
