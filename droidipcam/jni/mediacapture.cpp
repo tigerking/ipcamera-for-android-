@@ -78,11 +78,13 @@ void MediaStreamer::doCapture2() {
 
 }
 
-static unsigned long getCurrentTime() {
-    struct timeval tv;  
-    gettimeofday (&tv, NULL);
+static int64_t getCurrentTime() {
     
-    return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+    struct timeval tv;
+
+    gettimeofday (&tv, NULL);
+
+    return (INT64_C(1000000) * tv.tv_sec) + tv.tv_usec;
 }
 
 // this method only support H.264 + AMR_NB
@@ -92,8 +94,8 @@ void MediaStreamer::doCapture() {
     unsigned int aseq = 0;
     unsigned int vseq = 0;
    
-    const unsigned int STACK_SIZE = 1000;
-    std::list<unsigned long> timestack;
+    const unsigned int STACK_SIZE = 128;
+    std::list<int64_t> timestack;
     unsigned long last_ts = 0;
 
     // skip none useable heaer bytes
@@ -136,22 +138,25 @@ checking_buffer:
            
 #if 1        
             // computing the current package's timestamp 
-            long cts = getCurrentTime();
+            int64_t cts = getCurrentTime() / 1000;
+
             if( timestack.size() >= STACK_SIZE) {
                 timestack.pop_back();
                 timestack.push_front(cts);
             } else {
                 timestack.push_front(cts);
             }
+
             if ( timestack.size() < STACK_SIZE) {
-                cts = (timestack.size() - 1) * 40;      // default = 25 fps
-                last_ts = cts;
+                cts = (timestack.size() - 1) * 100;      // default = 10 fps
+                last_ts = (unsigned long)cts;
             } else {
                 unsigned long total_ms;
                 total_ms = timestack.front() - timestack.back();
                 cts = last_ts + total_ms / (STACK_SIZE - 1);
+                last_ts = cts;
             }
-            mediaBuffer->PushBuffer( buf, vpkg_len, cts, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
+            mediaBuffer->PushBuffer( buf, vpkg_len, last_ts, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
 #else
             vseq ++;
             mediaBuffer->PushBuffer( buf, vpkg_len, vseq * 1000 / mediaInfo.video_frame_rate, slice_type ? MEDIA_TYPE_VIDEO_KEYFRAME : MEDIA_TYPE_VIDEO);
