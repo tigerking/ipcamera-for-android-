@@ -156,10 +156,12 @@ public class MainActivity extends Activity {
         btnStart = (Button)findViewById(R.id.btn_start);
         btnStart.setOnClickListener(startAction);
         btnStart.setEnabled(true);
-
+		
+		/*
         Button btnTest = (Button)findViewById(R.id.btn_test);
         btnTest.setOnClickListener(testAction);
         btnTest.setVisibility(View.INVISIBLE);
+		*/
 
         RadioButton rb = (RadioButton)findViewById(R.id.res_low);
         rb.setOnClickListener(low_res_listener);
